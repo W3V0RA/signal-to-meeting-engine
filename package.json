@@ -1,0 +1,17 @@
+{
+  "name": "signal-to-meeting-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Evidence-led, human-approved outreach with safe offline defaults",
+  "engines": { "node": ">=24.0.0" },
+  "scripts": {
+    "demo": "node scripts/demo.mjs",
+    "test": "node --import ./tests/offline-guard.mjs --test tests/*.test.mjs",
+    "review": "node scripts/review.mjs",
+    "eval": "node scripts/evaluate.mjs",
+    "dashboard": "node scripts/dashboard.mjs",
+    "scan": "node scripts/scan.mjs",
+    "check": "npm test && npm run eval && npm run scan"
+  }
+}

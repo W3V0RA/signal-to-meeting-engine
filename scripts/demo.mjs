@@ -1,0 +1,35 @@
+import { randomUUID,randomBytes } from 'node:crypto';
+import { mkdirSync,writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { loadConfig,hash } from '../src/config.mjs';
+import { Store } from '../src/store.mjs';
+import { Engine,REVIEW_CHECKS } from '../src/engine.mjs';
+import { MockMail,MockNotion,MockDiscovery } from '../src/providers/mock.mjs';
+import { seal,PREFLIGHT_CHECKS } from '../src/security.mjs';
+import { scenario } from '../fixtures/scenario.mjs';
+import { dashboard,learning,syncNotion } from '../src/reporting.mjs';
+
+// Deliberately ignore live credentials and environment toggles: this command is always offline.
+const {config}=loadConfig('config/example.json',{}),flags={dryRun:true,liveSend:false,autonomy:false,integrationWrites:false};
+const dir=join('runtime',`demo-${randomUUID()}`);mkdirSync(dir,{recursive:true});
+const store=new Store(join(dir,'engine.sqlite'),config.tenant),keys=Object.fromEntries(['admin','release','preflight','inbound'].map(k=>[k,randomBytes(32).toString('hex')]));
+let now=new Date('2026-10-12T15:00:00Z');
+const mail=new MockMail(config.business),engine=new Engine({config,flags,store,mail,keys,clock:()=>new Date(now)});
+const sample=scenario(now),discovery=new MockDiscovery([sample.prospect],sample.pages);
+for(const prospect of await discovery.discover())engine.research(prospect,await Promise.all(sample.pages.map(p=>discovery.fetch(p.url))));
+const message=engine.draft(sample.draft);
+store.put('consent',message.recipient,{allowed:true,basis:'Fictional reviewed relevance only',reviewedBy:'Fictional Reviewer',expiresAt:'2027-01-01T00:00:00Z'});
+const approve=id=>engine.approve(id,{token:keys.admin,reviewer:'Fictional Reviewer',checks:Object.fromEntries(REVIEW_CHECKS.map(k=>[k,true])),allowFollowups:true});
+const release=id=>engine.release(id,{token:keys.admin,preflight:seal({kind:'sender-preflight',mode:'simulation',tenant:config.tenant,sender:config.business.sender,replyTo:config.business.replyTo,checkedAt:now.toISOString(),expiresAt:new Date(now.getTime()+3600000).toISOString(),checks:Object.fromEntries(PREFLIGHT_CHECKS.map(k=>[k,{artifactHash:hash(`SYNTHETIC DEMO ${k}`)}]))},keys.preflight)});
+approve(message.id);release(message.id);
+const defaultSend=await engine.deliver(message.id),simulated=await engine.deliver(message.id,{simulate:true});
+engine.planFollowups(message.id);now=new Date('2026-10-12T16:00:00Z');
+engine.ingest({id:'fictional-interest',threadId:simulated.threadId,recipient:message.recipient,classification:'interest',at:now.toISOString()},keys.inbound);
+const responseWork=store.get('work','response:fictional-interest');
+const response=engine.draft({...responseWork,id:'fictional-response',bookingRequested:true,subject:'A Proposed Customer Update Review',sections:[{type:'possibility',text:'We could review one proposed update together.'},{type:'fact',claimId:'schedule',text:sample.prospect.claims[0].text},{type:'question',text:`Would a time at ${config.integrations.bookingUrl} work for you?`}]});
+approve(response.id);release(response.id);await engine.deliver(response.id,{simulate:true});
+engine.verifyBooking(message.id,{id:'fictional-booking',provider:'mock-calendar',status:'confirmed',organizer:config.business.sender,start:'2026-10-15T15:00:00Z',end:'2026-10-15T15:30:00Z',attendees:[{email:message.recipient,accepted:true}]},keys.inbound);
+await syncNotion(engine,new MockNotion());
+const result={notice:'OFFLINE FICTIONAL SIMULATION. No mail, approval, release or booking entered an external system.',flags,defaultSend,metrics:dashboard(store),learning:learning(store),followups:store.list('work').filter(w=>w.kind==='followup').map(w=>({ordinal:w.ordinal,state:w.state,dueAt:w.dueAt})),subject:message.subject,body:message.body};
+writeFileSync(join(dir,'report.json'),JSON.stringify(result,null,2));writeFileSync('runtime/latest-demo.json',JSON.stringify({directory:dir}));store.close();
+console.log(JSON.stringify(result,null,2));console.log(`Local report: ${dir}/report.json`);

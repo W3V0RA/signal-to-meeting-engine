@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+config/local.json
+runtime/
+work/
+node_modules/
+*.sqlite*
+*.db*
+*.log
+coverage/
+credentials*
+token*.json
+*.pem

@@ -1,0 +1,15 @@
+# Validation and limits
+
+Run `npm run check` from the repository directory. It performs the complete isolated test suite, labeled synthetic research evaluations and a project-tree privacy/secret scan. Run `node scripts/scan.mjs --staged` before commit to inspect the actual Git index, then manually review all staged files. No credentials, network provider, deployment or external writes are used by tests.
+
+Tests preload an offline guard that refuses real fetch, HTTP(S) and DNS calls. Provider contracts use explicitly injected in-memory transports. SQLite persistence tests use isolated temporary directories and clean them after completion. Simulated keys are random and ephemeral; mock artifacts/releases never clear production.
+
+The suite covers invalid/stale/altered/future evidence, wrong company/source/recipient, exact address-token boundaries, separately sourced shared/official alternate-domain routes and named salutations, optional/out-of-range headcount and low scores, changed subject/body/recipient/identity/source invalidation, human authentication/checklists, HMAC forgery/expiry/purpose/thread/tenant, suppression and permission, prior threads/duplicates, caps/spacing/local windows/DST, concurrency, rollback/restart, uncertain retries, MIME injection/UTF-8/thread references, OAuth/Notion/Calendar stub contracts, reply/bounce/opt-out ingestion, idempotent cancellation, purpose-bound follow-ups, fresh response approval and booking gates.
+
+The end-to-end fixture runs research → draft → authenticated synthetic approval/release → mock transport → interested reply → follow-up cancellation → separate response approval/release → mock response → accepted fictional Calendar event → projection/audit/learning. Additional tests dispatch an individually authored follow-up and cancel a due draft immediately before attempted dispatch.
+
+These tests establish local engineering behavior. They do not prove live Gmail receipt/authentication/TLS, response delivery, provider signature transformations, production OAuth permission, live Notion field access, real Calendar event association, unattended scheduling, owner digest delivery or revenue. The official provider references are linked in integration guides; actual credentials and live proofs were deliberately not used.
+
+The scanner is heuristic and checks tracked/untracked non-ignored files, or exactly staged blobs with `--staged`. It rejects private-key/token/JWT patterns, credential/runtime/database artifacts and non-fictional email addresses. Repository-specific identifying-data checks must also be applied outside the published template. Manual complete-tree and history review remains required. Source files in the private predecessors were read as reference and were not edited by this build.
+
+CI is manually triggered to avoid automatic hosted-compute consumption on the private repository. It runs the same tests and scans on Windows and Linux with Node 24. Use available free GitHub Actions allocation or run checks locally; no paid execution is required. Configure automatic PR checks later if desired within your account's policies.

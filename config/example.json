@@ -1,0 +1,26 @@
+{
+  "tenant": "fictional-demo",
+  "business": {
+    "name": "Example Workflow Studio",
+    "website": "https://example.org",
+    "sender": "alex@example.org",
+    "replyTo": "alex@example.org",
+    "displayName": "Alex Rowan",
+    "signature": "Alex Rowan\nExample Workflow Studio\nhttps://example.org\n123 Fictional Lane, Example City, ZZ 00000",
+    "postalAddress": "123 Fictional Lane, Example City, ZZ 00000"
+  },
+  "offers": [{"id":"workflow-review", "description":"Review one customer-update workflow", "tags":["schedule", "customer updates"]}],
+  "icp": {"sectors":["services", "manufacturing"], "headcountPreferred":[20,200], "headcountAdvisory":true},
+  "markets": ["Example Region"],
+  "discovery": {"allowedHosts":["example.com"], "sources":["https://example.com/news"], "maxSourceAgeHours":24},
+  "prioritization": {"weights":{"relevance":0.6,"recency":0.4}, "advisoryOnly":true},
+  "policy": {
+    "timezone":"America/Chicago", "weekdays":[1,2,3,4,5],
+    "windowStart":"09:00", "windowEnd":"15:00", "dailyInitialCap":5,
+    "dailyMailboxCap":10, "minimumSpacingMinutes":60,
+    "followupDays":[4,7,18], "releaseMinutes":60, "inboundFreshMinutes":15,
+    "optOut":"If you prefer no further emails, reply unsubscribe.",
+    "writing":{"subjectWords":[3,7], "subjectCharacters":[36,50], "firstTouchWords":[50,80]}
+  },
+  "integrations": {"gmailUser":"me", "notionDataSourceId":"", "calendarId":"", "bookingUrl":"https://example.org/book", "ownerEmail":"alex@example.org"}
+}

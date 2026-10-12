@@ -1,0 +1,15 @@
+# Gmail setup and integration contract
+
+Use an existing business-owned Google account or verified sending alias. Do not create a paid mailbox or secondary domain as a prerequisite. Offline use needs no Google project or credentials.
+
+For a later authorized integration, configure your own OAuth client and account consent. Keep client ID/secret and refresh token in ignored local secrets. Request only the scopes used by your deployed functions: Gmail sending, read-only mailbox/thread access, basic sending settings for alias verification, and optional Calendar read-only. Avoid broad mailbox modification and drafts permissions when they are not needed. Testing-app token lifetime and account restrictions depend on your Google app setup; check the current [OAuth instructions](https://developers.google.com/identity/protocols/oauth2/web-server).
+
+The adapter refreshes an access token in memory, reads the authenticated profile and accepted sendAs aliases, verifies configured From/Reply-To, searches route history, reads a specified thread, and sends one exact MIME body. It never creates a Gmail draft. See the official [send endpoint](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/send), [thread read endpoint](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.threads/get) and [alias listing endpoint](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.settings.sendAs/list).
+
+The engine performs fresh identity/history checks before each enabled attempt. Its three flags, exact approval, production source evidence, reviewed permission, suppression/history, signed production sender proof and expiring release all remain required. Gmail API credentials alone confer no engine sending authorization. No live mail is sent during setup or tests.
+
+Inbound parsing supports plain-text parts, exact known-route replies and structured delivery-status bounces within a known thread. Negative/opt-out intent wins over interest wording. Explicit requests to share a booking/calendar link qualify as interest; other replies require conservative review. Inbound event ingestion authenticates separately, validates thread/recipient/time and is idempotent. Add a tested worker to poll active threads and, for full production coverage, reconcile mailbox-wide bounces, alternate routes and HTML-only messages. No Gmail push/webhook deployment or scheduled poller is included.
+
+Verify real received SPF/DKIM/DMARC and TLS artifacts, Reply-To routing, suppression, unsubscribe and cancellation in an explicitly authorized owned inbox before production rollout. DNS publication and provider acceptance alone are insufficient. Account-level signature transformations and actual recipient delivery are not proved by MIME stub tests. Never manufacture production artifact hashes from simulation outputs.
+
+Transport never automatically retries an uncertain response. Preserve the reservation and reconcile the generated Message-ID with Sent before any further decision.
