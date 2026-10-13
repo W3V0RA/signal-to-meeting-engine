@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './helpers.mjs';
 import { dashboard,learning,syncNotion } from '../src/reporting.mjs';
+import { ownerAlerts } from '../src/notifications.mjs';
 import { MockNotion } from '../src/providers/mock.mjs';
 import { followupDue,inWindow,nextWindow,localParts } from '../src/time.mjs';
 
@@ -23,7 +24,9 @@ test('offline vertical slice: research approval release send reply response book
   const projection=[...notion.pages.values()][0];assert.equal(projection.state,'interest');assert.match(projection.nextAction,/response/i);assert.equal(f.store.get('work',`response:${event.id}`).state,'completed');
   const calendarEvent={id:'another',provider:'mock-calendar',status:'confirmed',organizer:f.config.business.sender,start:'2026-10-15T15:00:00Z',end:'2026-10-15T15:30:00Z',attendees:[{email:f.s.prospect.contact.email,accepted:true}]};
   for(const bad of [{organizer:'other@example.org'},{attendees:[{email:'other@example.com',accepted:true}]},{end:undefined},{start:'invalid'},{end:'2026-10-15T14:00:00Z'}])assert.throws(()=>f.engine.verifyBooking(f.s.draft.id,{...calendarEvent,...bad},f.keys.inbound),/event required/);
-  f.engine.verifyBooking(f.s.draft.id,{id:'fictional-event',status:'cancelled',provider:'mock-calendar'},f.keys.inbound);assert.equal(dashboard(f.store).bookings,0);assert.equal(learning(f.store).meetingRate,0);f.store.close();
+  f.engine.verifyBooking(f.s.draft.id,{id:'fictional-event',status:'cancelled',provider:'mock-calendar'},f.keys.inbound);assert.equal(dashboard(f.store).bookings,0);assert.equal(learning(f.store).meetingRate,0);
+  assert.equal(ownerAlerts(f.engine),3);assert.equal(ownerAlerts(f.engine),0);assert.equal(f.store.db.prepare("SELECT COUNT(*) n FROM notifications WHERE kind='booking'").get().n,2);
+  const auditCount=f.store.db.prepare('SELECT COUNT(*) n FROM audit').get().n;f.engine.verifyBooking(f.s.draft.id,{id:'fictional-event',status:'cancelled',provider:'mock-calendar'},f.keys.inbound);assert.equal(f.store.db.prepare('SELECT COUNT(*) n FROM audit').get().n,auditCount);f.store.close();
 });
 test('later inbound revokes an already approved pending response',async()=>{
   const f=fixture();f.ready();const sent=await f.simulate();

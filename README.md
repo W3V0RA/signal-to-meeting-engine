@@ -1,54 +1,56 @@
 # Signal-to-Meeting Engine
 
-A private, reusable reference implementation for turning verified business signals into reviewed outreach and interest-led meetings. Customize the business, offers, markets and policy in configuration. Research facts, hypotheses, recommendations and execution remain distinct.
+A private, generic business application for evidence-backed outreach, individual human review, follow-ups, replies and interest-led meetings. Business identity, offerings, research sources and operating policy are configurable.
 
-**Ready for offline use. Live operation is not verified or enabled.** The project is newly authored from inspected predecessor requirements, with no imported prospect records, credentials, source history or third-party writing text. No open-source license is granted; see [reuse status](LICENSE_STATUS.md).
+**Ready to install in send-disabled mode. Each business's live integration verification remains pending until genuine evidence is supplied.** Environment flags alone cannot activate sending. The installation also requires fresh authenticated sender/integration verification and separate human activation. Neither setup, the console nor the verification commands enable sending.
 
-## Start here
+## Install and open
 
-Install Node.js 24 or newer. No database server, Docker, subscription or external account is required.
+Requirements: Node.js 24+ and an existing computer. No npm dependencies, database server, Docker, paid enrichment or model subscription is required.
 
 ```sh
-npm test
+npm run setup
+npm start
+```
+
+Open `http://127.0.0.1:3401`. Sign in with the `admin` value in your private, ignored `runtime/keys.json` file. Setup creates configuration, separate random operator credentials and a local SQLite database without overwriting existing files. Keep credentials private.
+
+Copy/customize `config/local.json` for the business before importing real data. Use a new tenant ID and database path for each business. Keep `DRY_RUN=true`, `LIVE_SEND_ENABLED=false`, `CONTROLLED_AUTONOMY_ENABLED=false` and `OWNER_EMAIL_ENABLED=false`. Read access has its own switches and is off by default. No live email, Gmail draft, deployment or account mutation is performed during installation.
+
+## Everyday workflow
+
+1. Record or import a researched company, person/role and exact published business route.
+2. Capture approved official sources. Pasted evidence cannot clear production.
+3. Author supported facts, honest possibilities and a useful question. Review the exact recipient, subject and body.
+4. Record permission and individual human approval. Evaluate the separate technical release.
+5. Use Operations for scheduled work, held delivery, owner digest/alert previews and audit. Read verified inbound context before authoring any response.
+6. Use Verification and `npm run doctor` to see the business's unresolved checks. The console provides no send or activation endpoint.
+
+The running application executes durable scheduled jobs for mailbox/DSN reads, source watch, sequence planning, associated Calendar reads, Notion projection, delivery admission and owner notifications. Reads/writes and every outbound channel remain independently gated. Restart recovery, leases, bounded read retries and uncertain-send reconciliation are implemented. The host must remain running; optional service templates do not install themselves.
+
+## Safety and capability
+
+Scores and headcount remain advisory. Exact source/contact association, honest claims, current permission/suppression/history, human approval, signed purpose/thread/touch-bound releases, mailbox identity, expiry, caps, local windows and pacing remain required. Replies, bounces and opt-outs cancel sequences. Responses need fresh exact-copy approval; booking links require explicit verified interest. Provider acceptance, simulations and link clicks do not prove delivery, meetings or revenue.
+
+Gmail, Calendar, Notion and public-source adapters are included. The mailbox verifier reads six existing, selected owned-inbox artifacts, checks receiving authentication/TLS, exact delivered copy, mirrored replies and unsubscribe, and records local suppression enforcement. It sends nothing and cannot create proof from simulation. Each business must provide its own accounts and actual artifacts; this repository contains none.
+
+```sh
+npm run doctor
+npm run worker
+npm run backup
+npm run check
 npm run demo
-npm run dashboard
 ```
 
-Open `http://127.0.0.1:3400`. The dashboard is a read-only view of the fictional demo. Stop it with Ctrl+C. The demo creates a fresh ignored `runtime/demo-...` folder each time and uses mock providers even if live environment variables exist. It never sends mail or writes to an external system.
+The separate fictional demo always uses mocks and can be viewed with `npm run dashboard` on port 3400. Integration verification and reconciliation commands are described in the setup/operations guides. CI is manually triggered and requires no deployment credentials.
 
-The demo shows discovery, captured evidence, a named contact at a separately verified shared inbox, outcome-first copy, simulated human approval, signed simulated release, simulated delivery, reply cancellation, separately approved response, interest-gated booking, mock Notion projection, audit and learning. Every result is fictional; provider acceptance is not proof of inbox delivery or revenue.
+## Guides
 
-## Customize for your business
+- [Business installation walkthrough](docs/SETUP.md) and [readiness checklist](docs/BUSINESS_READINESS.md)
+- [Capabilities and verification limits](docs/CAPABILITIES.md), [architecture](docs/ARCHITECTURE.md), [build specification](BUILD.md)
+- [Security and approval](SECURITY.md), [writing](docs/WRITING.md), [operations/recovery](docs/OPERATIONS.md)
+- [Customization/migration](docs/CUSTOMIZATION.md), [schema](schema/README.md), [validation](docs/VALIDATION.md)
+- [Gmail](docs/integrations/GMAIL.md), [Calendar](docs/integrations/CALENDAR.md), [Notion](docs/integrations/NOTION.md), [research](docs/integrations/RESEARCH.md)
+- [Provenance and reuse status](LICENSE_STATUS.md)
 
-```sh
-cp config/example.json config/local.json
-cp .env.example .env
-```
-
-On Windows use `Copy-Item` instead of `cp`. Update business identity, offering, ICP, markets, public sources, sender, reply route, signature, postal address, timezone, caps, pacing, cadence, booking URL and integration IDs. Keep `DRY_RUN=true`, `LIVE_SEND_ENABLED=false` and `CONTROLLED_AUTONOMY_ENABLED=false`. The demo deliberately uses the example configuration; your private settings are used by your local integration runner described in [setup](docs/SETUP.md).
-
-Numerical scores and headcount are advisory and cannot block a prospect. Company facts, exact published contact routes, accurate copy, reviewed outreach permission, suppression/history, approval, authenticated expiring releases and sender proof remain hard gates.
-
-## What's included
-
-| Area | Implementation |
-|---|---|
-| Core | Configurable policies, evidence/contact checks, claim-structured copy and advisory scoring |
-| Safety | Exact-copy human approval, purpose/thread/touch-bound HMAC releases, expiry, suppression and consent |
-| Delivery | Atomic local reservation, duplicate/history guards, caps, timezone/window/spacing, uncertain-send holds |
-| Lifecycle | Personalized follow-up work, cancellation, reply/bounce/opt-out parsing, fresh response approval |
-| Meetings | Interest gate and read-only Calendar adapter; confirmed accepted event required |
-| Integrations | Gmail, public-web, Notion and Calendar adapters with injectable offline providers |
-| Operations | Durable SQLite state, localhost demo dashboard, audit, cost totals, synthetic evaluations and CI |
-
-See the [capability matrix](docs/CAPABILITIES.md) for exact limitations. This is a local library and reference workflow, not a deployed unattended sales service. Automatic broad prospect discovery, unrestricted semantic claim verification, trusted production preflight collection, scheduled digest delivery and live integration proofs remain explicit gaps.
-
-## Documentation
-
-- [Setup walkthrough](docs/SETUP.md) and [customization/migration](docs/CUSTOMIZATION.md)
-- [Generic build specification](BUILD.md), [architecture](docs/ARCHITECTURE.md) and [capability matrix](docs/CAPABILITIES.md)
-- [Approval and security](SECURITY.md), [writing guidance](docs/WRITING.md) and [operations](docs/OPERATIONS.md)
-- [Gmail](docs/integrations/GMAIL.md), [Notion](docs/integrations/NOTION.md), [Calendar](docs/integrations/CALENDAR.md) and [research](docs/integrations/RESEARCH.md)
-- [Schema and migration](schema/README.md), [validation](docs/VALIDATION.md) and [reuse/provenance](LICENSE_STATUS.md)
-
-Run `npm run check` for tests, synthetic evaluations and the privacy scan. CI runs those checks without external credentials; there is no deployment or send workflow.
+This is a single-business local deployment, not a hosted multi-tenant CRM. It does not promise unrestricted semantic claim verification, web-wide discovery, autonomous prose authoring or commercial results. Source and message authoring remain explicitly reviewed. No original production data/history or third-party source text is included, and no open-source redistribution license has been invented.

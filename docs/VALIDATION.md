@@ -1,15 +1,23 @@
-# Validation and limits
+# Validation plan and evidence limits
 
-Run `npm run check` from the repository directory. It performs the complete isolated test suite, labeled synthetic research evaluations and a project-tree privacy/secret scan. Run `node scripts/scan.mjs --staged` before commit to inspect the actual Git index, then manually review all staged files. No credentials, network provider, deployment or external writes are used by tests.
+Run `npm run check` for isolated tests, six labeled synthetic research evaluations and the project secret/privacy scan. Test preload denies real fetch, HTTP(S) and DNS. Provider tests inject in-memory transports; all fixture contacts and domains are fictional. No test signs or publishes a real production proof, sends email, creates Gmail drafts or writes a live integration.
 
-Tests preload an offline guard that refuses real fetch, HTTP(S) and DNS calls. Provider contracts use explicitly injected in-memory transports. SQLite persistence tests use isolated temporary directories and clean them after completion. Simulated keys are random and ephemeral; mock artifacts/releases never clear production.
+Coverage includes the original evidence/contact, advisory size/score, exact approval/release, suppression/permission/history, caps/window/DST, uncertain retry and purpose/thread/touch lifecycle cases, plus:
 
-The suite covers invalid/stale/altered/future evidence, wrong company/source/recipient, exact address-token boundaries, separately sourced shared/official alternate-domain routes and named salutations, optional/out-of-range headcount and low scores, changed subject/body/recipient/identity/source invalidation, human authentication/checklists, HMAC forgery/expiry/purpose/thread/tenant, suppression and permission, prior threads/duplicates, caps/spacing/local windows/DST, concurrency, rollback/restart, uncertain retries, MIME injection/UTF-8/thread references, OAuth/Notion/Calendar stub contracts, reply/bounce/opt-out ingestion, idempotent cancellation, purpose-bound follow-ups, fresh response approval and booking gates.
+| Boundary | Verification |
+|---|---|
+| Local console | Login/session expiry/rate limit, Host/origin/CSRF, private data, stale exact copy and no send/activation routes |
+| Installation | Durable hold, flags unable to bypass it, simulation unable to become real proof |
+| Storage | Legacy generic adoption, migration checksums/downgrade refusal, transaction/persistence and consistent backup |
+| Worker | Default no-provider cycle, durable schedules, lease exclusivity/recovery, backoff/hold, cursor safety and digest idempotency |
+| Notifications | Owner-only preview/mock transport, duplicate/uncertain holds and shared prospect/owner mailbox cap |
+| Inbound | HTML/quoted context, exact aliases, unknown participant, attachment limits and cross-thread structured DSN correlation |
+| Verifier | Six mirrored actual-style artifact contracts, identity/route/copy/authentication/TLS/age refusal cases, signed integration binding |
+| Recovery | Original reserved Message-ID/context, exact Sent readback, no-match/multiple/mismatch holds and no resend |
+| Meetings | Interest/response/acceptance, cancellation, durable owner alerts and repeated cancellation idempotency |
 
-The end-to-end fixture runs research → draft → authenticated synthetic approval/release → mock transport → interested reply → follow-up cancellation → separate response approval/release → mock response → accepted fictional Calendar event → projection/audit/learning. Additional tests dispatch an individually authored follow-up and cancel a due draft immediately before attempted dispatch.
+Actual local setup, readiness doctor, scheduler cycle, backup command and browser inspection were exercised with sending disabled. The browser showed unchecked individual review controls, zero provider sends and pending genuine-business verification. Fresh-clone installation and restart/backup tests are part of acceptance; GitHub CI remains a manually triggered Windows/Linux check definition with no deployment credentials.
 
-These tests establish local engineering behavior. They do not prove live Gmail receipt/authentication/TLS, response delivery, provider signature transformations, production OAuth permission, live Notion field access, real Calendar event association, unattended scheduling, owner digest delivery or revenue. The official provider references are linked in integration guides; actual credentials and live proofs were deliberately not used.
+Mock/stub success is not actual OAuth permission, recipient delivery/authentication/TLS, owner notification receipt, real Calendar association, production Notion writes or commercial proof. The live collector is implemented but has not been run against business credentials in this task. Such business-specific verification stays pending, not falsely labeled complete.
 
-The scanner is heuristic and checks tracked/untracked non-ignored files, or exactly staged blobs with `--staged`. It rejects private-key/token/JWT patterns, credential/runtime/database artifacts and non-fictional email addresses. Repository-specific identifying-data checks must also be applied outside the published template. Manual complete-tree and history review remains required. Source files in the private predecessors were read as reference and were not edited by this build.
-
-CI is manually triggered to avoid automatic hosted-compute consumption on the private repository. It runs the same tests and scans on Windows and Linux with Node 24. Use available free GitHub Actions allocation or run checks locally; no paid execution is required. Configure automatic PR checks later if desired within your account's policies.
+Before pushing, scan all tracked/untracked non-ignored text and staged blobs, run a separate predecessor-identifier check, review the complete diff and confirm no runtime/config-local/env/key/backup artifacts entered Git. The heuristic scan cannot prove absence of every secret; manual review remains required. Existing production sources/systems remain outside this task's write boundary.

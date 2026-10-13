@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { email,normalizeEmail } from '../config.mjs';
+import { headersOf,addressFrom,mimePart,messageText } from '../text.mjs';
 export function rawMessage(m) {
   for(const route of [m.from,m.replyTo,m.recipient])if(!email(route))throw Error('Invalid email header');
   for(const field of [m.displayName,m.subject,m.rfcParentId??''])if(typeof field!=='string'||/[\r\n]/.test(field))throw Error('Header injection');
@@ -17,18 +18,18 @@ export function classify(text) {
   if(/\b(please send (?:me )?(?:the )?(?:booking|calendar) link|yes[, ]+please (?:share|send) (?:the )?(?:booking|calendar) link)\b/i.test(text))return 'interest';
   return 'reply';
 }
-const headers=payload=>Object.fromEntries((payload.headers??[]).map(h=>[h.name.toLowerCase(),h.value]));
-function plain(payload){return (payload.mimeType==='text/plain'&&payload.body?.data?Buffer.from(payload.body.data,'base64url').toString('utf8'):'')+(payload.parts??[]).map(plain).join('\n');}
-function deliveryStatus(payload){return (payload.mimeType==='message/delivery-status'&&payload.body?.data?Buffer.from(payload.body.data,'base64url').toString('utf8'):'')+(payload.parts??[]).map(deliveryStatus).join('\n');}
-export function inboundFromThread(thread,recipient,sender) {
+export function inboundFromThread(thread,recipient,sender,{aliases=[],allowUnknown=true}={}) {
   const events=[];
   for(const m of thread.messages??[]) {
-    const h=headers(m.payload??{}),from=h.from?.match(/(?:<)?([A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})(?:>)?/)?.[1]?.toLowerCase();
+    const h=headersOf(m.payload??{}),from=addressFrom(h.from);
     if(m.labelIds?.includes('SENT')||from===sender.toLowerCase())continue;
-    const text=plain(m.payload??{}),status=deliveryStatus(m.payload??{});
+    const text=messageText(m.payload??{}),status=mimePart(m.payload??{},'message/delivery-status');
     const bounced=status.match(/Final-Recipient:\s*rfc822;\s*([^\s\r\n]+)/i)?.[1]?.toLowerCase()===recipient.toLowerCase()&&/^Status:\s*[45]\./mi.test(status);
-    if(from!==recipient.toLowerCase()&&!bounced)continue;
-    events.push({id:m.id,threadId:thread.id,recipient,classification:bounced?'bounce':classify(text),at:new Date(Number(m.internalDate)).toISOString()});
+    if(status&&!bounced)continue;
+    const known=[recipient.toLowerCase(),...aliases.map(normalizeEmail)].includes(from);
+    if(!from||(!known&&!bounced&&!allowUnknown))continue;
+    const classification=bounced?'bounce':known?classify(text):/\b(unsubscribe|remove me|stop emailing|do not contact)\b/i.test(text)?'unsubscribe':'reply';
+    events.push({id:m.id,threadId:thread.id,recipient,classification,at:new Date(Number(m.internalDate)).toISOString(),text:text.slice(0,20000),from,rfcId:h['message-id']??null,unverifiedRoute:!known&&!bounced});
   }
   return events;
 }
@@ -63,11 +64,69 @@ export class Gmail {
       if(!pageToken)break;if(page===19)throw Error('History overflow; manual review required');
     }
     let inbound=[];
-    if(threadId) {const thread=await this.api(`threads/${encodeURIComponent(threadId)}?format=full`);inbound=inboundFromThread(thread,recipient,this.business.sender);}
+    if(threadId) {const thread=await this.thread(threadId);inbound=inboundFromThread(thread,recipient,this.business.sender);}
     return {priorThreads:threads.map(t=>t.id),inbound};
   }
-  async send(message) {
-    const {raw,rfcId}=rawMessage(message);
+  async message(id,format='full') {
+    if(!/^[A-Za-z0-9_-]+$/.test(id)||!['full','raw','metadata'].includes(format))throw Error('Invalid Gmail message reference');
+    const result=await this.api(`messages/${encodeURIComponent(id)}?format=${format}`);
+    if(format==='full'&&result.payload)await this.hydratePayload(result.id,result.payload);
+    return result;
+  }
+  async hydratePayload(messageId,payload) {
+    if(payload.body?.attachmentId&&['text/plain','text/html','message/delivery-status','text/rfc822-headers','message/rfc822'].includes(payload.mimeType)) {
+      if((payload.body.size??0)>2000000)throw Error('Inbound text exceeds safe parsing limit; manual review required');
+      const attachment=await this.api(`messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(payload.body.attachmentId)}`);
+      if(typeof attachment.data!=='string'||attachment.data.length>2700000)throw Error('Inbound attachment malformed or too large');
+      payload.body.data=attachment.data;
+    }
+    for(const part of payload.parts??[])await this.hydratePayload(messageId,part);
+  }
+  async thread(threadId) {
+    const thread=await this.api(`threads/${encodeURIComponent(threadId)}?format=full`);
+    for(const message of thread.messages??[])if(!message.labelIds?.includes('SENT')&&message.payload)await this.hydratePayload(message.id,message.payload);
+    return thread;
+  }
+  async listMessages(q) {
+    const messages=[];let pageToken;
+    for(let page=0;page<20;page++) {
+      const params=new URLSearchParams({q,maxResults:'100',includeSpamTrash:'true'});if(pageToken)params.set('pageToken',pageToken);
+      const result=await this.api(`messages?${params}`);messages.push(...(result.messages??[]));pageToken=result.nextPageToken;
+      if(!pageToken)return messages;
+    }
+    throw Error('Mailbox scan overflow; sending remains held');
+  }
+  async scan({attempts,since,aliases={}}) {
+    const events=[],warnings=[],threadIds=[...new Set(attempts.map(a=>a.thread_id).filter(Boolean))];
+    for(const threadId of threadIds) {
+      const parent=attempts.find(a=>a.thread_id===threadId&&a.kind==='initial');if(!parent)continue;
+      const thread=await this.thread(threadId);
+      events.push(...inboundFromThread(thread,parent.recipient,this.business.sender,{aliases:aliases[parent.recipient]??[]}).filter(e=>Date.parse(e.at)>=Date.parse(parent.at)));
+    }
+    // DSNs can arrive in a separate thread. Bind by exact failed route and original Message-ID.
+    const after=Math.floor(new Date(since).getTime()/1000);
+    if(!Number.isFinite(after))throw Error('Invalid inbound scan cursor');
+    const references=await this.listMessages(`in:anywhere after:${after} {from:mailer-daemon from:postmaster}`);
+    for(const ref of references) {
+      const raw=await this.message(ref.id),status=mimePart(raw.payload??{},'message/delivery-status');
+      const failed=status.match(/Final-Recipient:\s*rfc822;\s*([^\s\r\n]+)/i)?.[1]?.toLowerCase();
+      if(!failed||!/^Status:\s*[45]\./mi.test(status))continue;
+      const attached=mimePart(raw.payload??{},'text/rfc822-headers')+'\n'+mimePart(raw.payload??{},'message/rfc822');
+      const parent=attempts.find(a=>a.kind==='initial'&&a.recipient===failed&&a.rfc_id&&attached.includes(a.rfc_id));
+      if(!parent){warnings.push('Unmatched delivery-status event requires review');continue;}
+      events.push({id:raw.id,threadId:parent.thread_id,recipient:failed,classification:'bounce',at:new Date(Number(raw.internalDate)).toISOString(),providerThreadId:raw.threadId,text:'Structured delivery-status failure',from:addressFrom(headersOf(raw.payload??{}).from)});
+    }
+    return {events:[...new Map(events.map(e=>[e.id,e])).values()],warnings};
+  }
+  async reconcileAttempt(attempt) {
+    if(!attempt.rfc_id)throw Error('Reserved Message-ID unavailable; keep the uncertain hold');
+    const references=await this.listMessages(`in:sent rfc822msgid:${attempt.rfc_id}`);
+    const messages=await Promise.all(references.map(r=>this.message(r.id)));
+    return messages;
+  }
+  prepare(message){return rawMessage(message);}
+  async send(message,prepared=null) {
+    const {raw,rfcId}=prepared??rawMessage(message);
     const body={raw};if(message.threadId)body.threadId=message.threadId;
     const result=await this.api('messages/send',{method:'POST',body:JSON.stringify(body)});
     return {...result,rfcId};

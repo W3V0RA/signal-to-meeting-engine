@@ -4,6 +4,8 @@ import { researchGaps,advisoryScore } from './evidence.mjs';
 import { bodyFor,writingGaps,messageDigest } from './writing.mjs';
 import { seal,unseal,preflightGaps,releasePayload } from './security.mjs';
 import { inWindow,localParts,nextWindow,followupDue } from './time.mjs';
+import { activationGaps } from './readiness.mjs';
+import { mailboxAdmission } from './notifications.mjs';
 
 export const REVIEW_CHECKS=['business','sources','claimsAndHypotheses','contactRoute','exactCopy','suppressionAndConsent'];
 export class Engine {
@@ -116,6 +118,7 @@ export class Engine {
     if(m.kind==='initial'&&todays.filter(a=>a.kind==='initial').length>=this.config.policy.dailyInitialCap)gaps.push('Daily initial cap');
     const latest=attempts.sort((a,b)=>Date.parse(b.at)-Date.parse(a.at))[0];
     if(latest&&now.getTime()-Date.parse(latest.at)<this.config.policy.minimumSpacingMinutes*60000)gaps.push('Minimum spacing');
+    gaps.push(...mailboxAdmission(this,now));
     return [...new Set(gaps)];
   }
   async deliver(id,{simulate=false}={}) {
@@ -123,6 +126,7 @@ export class Engine {
     if(!simulate&&(this.flags.dryRun||!this.flags.liveSend||!this.flags.autonomy))return {status:'dry_run',reason:'Live transport disabled'};
     if(simulate&&(this.mail.mode!=='mock'||!this.flags.dryRun||this.flags.liveSend))throw Error('Simulation requires mock provider and disabled live sending');
     if(!simulate&&this.mail.mode!=='gmail')throw Error('Live provider unavailable');
+    if(!simulate){const gaps=activationGaps(this);if(gaps.length)throw Error(`Delivery blocked: ${gaps.join('; ')}`);}
     const {m}=this.context(id),production=!simulate;
     const identity=await this.mail.identity(),check=await this.mail.inspect(m.recipient,m.threadId);
     if(identity.sender!==this.config.business.sender||identity.replyTo!==this.config.business.replyTo)throw Error('Mailbox identity mismatch');
@@ -130,19 +134,25 @@ export class Engine {
     this.store.put('mailboxCheck',m.recipient,{...check,...identity,at:now.toISOString()});
     for(const event of check.inbound??[])this.ingest(event,this.keys.inbound);
     // Serialize all workers sharing this one-business database. Reservations count against caps even when uncertain.
+    let prepared=null,reservedDigest=null;
     this.store.transaction(()=>{
       const gaps=this.deliveryGaps(id,now,production);if(gaps.length)throw Error(`Delivery blocked: ${gaps.join('; ')}`);
-      this.store.db.prepare('INSERT INTO attempts(message_id,recipient,kind,local_day,at,status,parent_id,ordinal,inbound_id) VALUES(?,?,?,?,?,?,?,?,?)').run(id,m.recipient,m.kind,localParts(now,this.config.policy).day,now.toISOString(),'reserved',m.parentId??null,m.ordinal??null,m.inboundId??null);
+      const ready=this.context(id);reservedDigest=ready.digest;
+      this.store.put('attemptContext',id,{...ready,configHash:hash(this.config),business:this.config.business});
+      if(this.mail.prepare)prepared=this.mail.prepare({...ready.m,from:this.config.business.sender,replyTo:this.config.business.replyTo,displayName:this.config.business.displayName});
+      this.store.db.prepare('INSERT INTO attempts(message_id,recipient,kind,local_day,at,status,parent_id,ordinal,inbound_id,rfc_id) VALUES(?,?,?,?,?,?,?,?,?,?)').run(id,m.recipient,m.kind,localParts(now,this.config.policy).day,now.toISOString(),'reserved',m.parentId??null,m.ordinal??null,m.inboundId??null,prepared?.rfcId??null);
       this.store.audit('reserved',id,now,{simulation:simulate});
     });
     try {
       // Reload and reject edits/suppression received during provider preflight before transport.
       const current=this.context(id);
+      if(current.digest!==reservedDigest)throw Error('Reserved message changed before transport');
       if(current.digest!==this.store.get('approval',m.kind==='followup'?m.parentId:id)?.digest&&m.kind!=='followup')throw Error('Copy changed before transport');
       if(this.store.suppressed(m.recipient)||this.baseGaps(id,this.clock(),production).length)throw Error('Safety state changed before transport');
+      if(production&&activationGaps(this).length)throw Error('Installation verification or send hold changed');
       const stored=this.store.get('release',id),release=unseal(stored.envelope,this.keys.release),transportTime=this.clock();
       if(release.digest!==current.digest||Date.parse(release.expiresAt)<=transportTime.getTime()||!inWindow(transportTime,this.config.policy)||preflightGaps(stored.preflight,this.keys.preflight,this.config,transportTime,production).length)throw Error('Release or window changed before transport');
-      const result=await this.mail.send({...current.m,from:this.config.business.sender,replyTo:this.config.business.replyTo,displayName:this.config.business.displayName});
+      const result=await this.mail.send({...current.m,from:this.config.business.sender,replyTo:this.config.business.replyTo,displayName:this.config.business.displayName},prepared);
       if(!result.id||!result.threadId||!result.rfcId)throw Error('Provider confirmation incomplete');
       this.store.transaction(()=>{
         this.store.db.prepare("UPDATE attempts SET status='sent',provider_id=?,thread_id=?,rfc_id=? WHERE message_id=?").run(result.id,result.threadId,result.rfcId,id);
@@ -176,8 +186,9 @@ export class Engine {
     return this.store.transaction(()=>{
       const result=this.store.db.prepare('INSERT OR IGNORE INTO inbound VALUES(?,?,?,?,?)').run(event.id,event.threadId,recipient,event.classification,event.at);
       if(!result.changes)return {duplicate:true};
+      this.store.put('inboundDetail',event.id,{...event,recipient});
       this.store.put('sequence',parent.message_id,{...this.store.get('sequence',parent.message_id),stopped:true,reason:event.classification});
-      for(const work of this.store.list('work').filter(w=>w.parentId===parent.message_id&&w.kind==='followup'))this.store.put('work',work.id,{...work,state:'cancelled'});
+      for(const work of this.store.list('work').filter(w=>w.parentId===parent.message_id&&w.kind==='followup'&&w.state!=='completed'))this.store.put('work',work.id,{...work,state:'cancelled'});
       for(const msg of this.store.list('message').filter(w=>w.parentId===parent.message_id&&w.kind==='followup'&&w.state!=='sent')) {
         this.store.put('message',msg.id,{...msg,state:'cancelled'});this.store.put('release',msg.id,null);
       }
@@ -186,7 +197,7 @@ export class Engine {
       }
       if(['bounce','unsubscribe'].includes(event.classification))this.store.suppress(recipient,event.classification,this.clock());
       if(['reply','interest'].includes(event.classification))this.store.put('work',`response:${event.id}`,{id:`response:${event.id}`,kind:'response',parentId:parent.message_id,inboundId:event.id,prospectId:this.store.get('message',parent.message_id).prospectId,threadId:event.threadId,rfcParentId:parent.rfc_id,state:'needs_authoring',interest:event.classification==='interest'});
-      this.store.put('work',`alert:${event.id}`,{id:`alert:${event.id}`,kind:'owner_alert',state:'pending',classification:event.classification});
+      this.store.put('work',`alert:${event.id}`,{id:`alert:${event.id}`,kind:'owner_alert',state:'pending',classification:event.classification,inboundId:event.id,parentId:parent.message_id,prospectId:this.store.get('message',parent.message_id).prospectId});
       this.store.audit('inbound_classified',parent.message_id,this.clock(),{id:event.id,classification:event.classification});
       return {duplicate:false,sequenceStopped:true};
     });
@@ -196,15 +207,26 @@ export class Engine {
     if(event.status==='cancelled') {
       const prior=this.store.db.prepare('SELECT * FROM outcomes WHERE id=? AND record_id=?').get(`booking:${event.id}`,initialId);
       if(!prior)throw Error('Unknown cancelled booking');
-      this.store.db.prepare('UPDATE outcomes SET detail=? WHERE id=?').run(JSON.stringify({...JSON.parse(prior.detail),status:'cancelled'}),prior.id);
-      this.store.audit('booking_cancelled',initialId,this.clock(),{eventId:event.id});return {status:'cancelled'};
+      if(JSON.parse(prior.detail).status==='cancelled')return {status:'cancelled'};
+      this.store.transaction(()=>{
+        this.store.db.prepare('UPDATE outcomes SET detail=? WHERE id=?').run(JSON.stringify({...JSON.parse(prior.detail),status:'cancelled'}),prior.id);
+        this.store.put('work',`booking-alert:${event.id}:cancelled`,{id:`booking-alert:${event.id}:cancelled`,kind:'owner_alert',state:'pending',classification:'cancelled_booking',eventId:event.id,parentId:initialId,prospectId:this.store.get('message',initialId).prospectId});
+        this.store.audit('booking_cancelled',initialId,this.clock(),{eventId:event.id});
+      });return {status:'cancelled'};
     }
     const parent=this.store.get('message',initialId),interest=this.store.db.prepare("SELECT 1 FROM inbound WHERE thread_id=? AND recipient=? AND classification='interest'").get(parent?.threadId??this.store.db.prepare('SELECT thread_id FROM attempts WHERE message_id=?').get(initialId)?.thread_id??'',parent?.recipient??'');
     const bookingResponse=this.store.list('message').find(m=>m.parentId===initialId&&m.kind==='response'&&m.bookingRequested&&m.state==='sent');
     const initialAttempt=this.store.db.prepare('SELECT at FROM attempts WHERE message_id=?').get(initialId);
     if(!interest||!bookingResponse||!event.id||event.status!=='confirmed'||event.organizer!==this.config.business.sender||!event.attendees?.some(a=>a.email===parent.recipient&&a.accepted)||!Number.isFinite(Date.parse(event.start))||!Number.isFinite(Date.parse(event.end))||Date.parse(event.start)<Date.parse(initialAttempt?.at??'')||Date.parse(event.end)<=Date.parse(event.start)||!['mock-calendar','google-calendar'].includes(event.provider))throw Error('Actual accepted calendar event required');
-    this.store.db.prepare('INSERT INTO outcomes VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET detail=excluded.detail').run(`booking:${event.id}`,'booking',initialId,this.clock().toISOString(),JSON.stringify(event));
-    this.store.audit('booking_verified',initialId,this.clock(),{eventId:event.id,mode:event.provider});return {status:'confirmed',simulation:event.provider==='mock-calendar'};
+    const prior=this.store.db.prepare('SELECT detail,record_id FROM outcomes WHERE id=?').get(`booking:${event.id}`);
+    if(prior&&prior.record_id!==initialId)throw Error('Calendar event already belongs to another initial');
+    if(prior&&prior.detail===JSON.stringify(event))return {status:'confirmed',simulation:event.provider==='mock-calendar'};
+    this.store.transaction(()=>{
+      this.store.db.prepare('INSERT INTO outcomes VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET detail=excluded.detail').run(`booking:${event.id}`,'booking',initialId,this.clock().toISOString(),JSON.stringify(event));
+      const workId=`booking-alert:${event.id}:confirmed`;
+      if(!this.store.get('work',workId))this.store.put('work',workId,{id:workId,kind:'owner_alert',state:'pending',classification:'confirmed_booking',eventId:event.id,parentId:initialId,prospectId:parent.prospectId});
+      this.store.audit('booking_verified',initialId,this.clock(),{eventId:event.id,mode:event.provider});
+    });return {status:'confirmed',simulation:event.provider==='mock-calendar'};
   }
   nextEligible(now=this.clock()) {return nextWindow(now,this.config.policy);}
 }

@@ -22,7 +22,7 @@ The writing standard uses an outcome-first possible payoff, prompt connection to
 
 ## Approval and release
 
-A trusted human reviews the exact recipient, subject, body, claims, route, suppression and outreach permission. Approval stores a digest binding content, business configuration, evidence and purpose. Copy edits clear approval and release. Refreshing source evidence invalidates an unsent approval. Attempted messages are immutable.
+The authenticated loopback console supports an individual trusted human reviewing the exact recipient, subject, body, claims, route, suppression and outreach permission. Stale edits/reviews are refused. Approval stores a digest binding content, business configuration, evidence and purpose. Copy edits clear approval and release. Refreshing source evidence invalidates an unsent approval. Attempted messages are immutable.
 
 Approval and trusted technical release are separate. A release binds tenant, message, exact digest, sender, Reply-To, recipient, purpose, parent, thread and touch order. It expires within one hour and within the authenticated sender proof lifetime. Signer keys are held by trusted local operator processes, never by a model, browser or projection. Simulation keys/artifacts cannot clear production. Production sender proofs must derive from actual received authentication/TLS, reply routing, suppression, unsubscribe and healthy inbound artifacts collected outside the demo.
 
@@ -30,7 +30,7 @@ Approval and trusted technical release are separate. A release binds tenant, mes
 
 Disabled mode exits before provider access, reservations or mutations. Live transport additionally requires the explicit three send flags, production evidence/proof/release and the Gmail adapter. Fresh sender identity and thread checks precede atomic SQLite reservation. Recheck exact content, source/permission/suppression, release expiry and send window before transport. Reservations count toward caps, including ambiguous outcomes. Never automatically retry a send after provider timeout or uncertain local persistence. Reconcile provider Sent manually; preserve history rather than deleting attempts.
 
-Overflow is held and a next eligible window can be calculated. A scheduler that actually wakes and dispatches overflow is not included. The local database supports multiple workers on the same machine through serialized transactions; it is not a distributed queue or multi-tenant hosted service.
+Overflow is held and a next eligible window is recorded. The durable worker reconsiders approved/released work in later eligible windows while the application runs. Installation activation, source/proof expiry and every transport guard are rechecked. The local database supports multiple workers on the same machine through serialized transactions; it is not a distributed queue or multi-tenant hosted service.
 
 ## Lifecycle and outcomes
 
@@ -42,4 +42,4 @@ Track technical provider acceptance separately from delivery and commercial outc
 
 ## Release acceptance
 
-Require passing offline lifecycle, failure, concurrency, persistence, evidence, identity, approval, release, history, cap, clock/DST, reply/bounce/cancellation and booking tests; secret/private-data scan of the complete staged tree; newly authored provenance review; and a fresh Git history. Live credential tests, scheduler integration, digest delivery and production rollout require a separate authorized implementation and verification scope.
+Require passing offline lifecycle, failure, concurrency, persistence, evidence, identity, approval, release, history, cap, clock/DST, reply/bounce/cancellation and booking tests; secret/private-data scan of the complete staged tree; newly authored provenance review; and a fresh Git history. The operator console, durable scheduler, owner outbox, source watch, broader inbound parsing, evidence collector, checksummed migrations, backup and exact Sent reconciliation are implemented. Live credential/recipient/owner verification and explicit production activation remain business-specific authorized steps.

@@ -17,10 +17,11 @@ export function writingGaps(m,p,c,previous=[]) {
     if(count<rule.firstTouchWords[0]||count>rule.firstTouchWords[1])gaps.push('First-touch word count');
     if(!/\b(could|might|may)\b/i.test(m.sections[0].text))gaps.push('Opening needs an honest possible outcome');
   }
-  if((main.match(/\?/g)??[]).length!==1||!m.sections.at(-1)?.text.endsWith('?'))gaps.push('One soft closing question required');
+  const questions=(main.match(/\?/g)??[]).length;
+  if(m.kind==='response' ? questions>1 : questions!==1||!m.sections.at(-1)?.text.endsWith('?'))gaps.push('One soft closing question required');
   if(/^(re:|fwd:)|quick question/i.test(m.subject))gaps.push('Deceptive or generic subject');
   const claims=new Map(p.claims.map(x=>[x.id,x]));
-  if(!m.sections.some(s=>s.type==='fact'))gaps.push('Cited company fact required');
+  if(m.kind!=='response'&&!m.sections.some(s=>s.type==='fact'))gaps.push('Cited company fact required');
   for(const s of m.sections) {
     if(s.type==='fact') {if(claims.get(s.claimId)?.text!==s.text)gaps.push('Message claim lacks exact source support');}
     else if(s.type==='possibility') {

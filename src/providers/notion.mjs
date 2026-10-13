@@ -6,6 +6,11 @@ export class Notion {
     const response=await this.fetcher(`https://api.notion.com/v1/${path}`,{method,headers:{Authorization:`Bearer ${this.token}`,'Notion-Version':'2025-09-03','Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
     if(!response.ok)throw Error(`Notion sync failed (${response.status})`);return response.json();
   }
+  async check(){
+    const source=await this.request(`data_sources/${this.dataSourceId}`,'GET');
+    for(const [name,type]of Object.entries({Name:'title','Engine ID':'rich_text','Engine State':'rich_text','Next Action':'rich_text'}))if(source.properties?.[name]?.type!==type)throw Error(`Notion property mapping invalid: ${name}`);
+    return source;
+  }
   async upsert(id,data,existingId) {
     // Only system-owned projection properties are updated. Human copy/approval stays canonical locally.
     const properties={Name:{title:[{text:{content:data.company}}]},'Engine ID':{rich_text:[{text:{content:id}}]},'Engine State':{rich_text:[{text:{content:data.state}}]},'Next Action':{rich_text:[{text:{content:data.nextAction}}]}};

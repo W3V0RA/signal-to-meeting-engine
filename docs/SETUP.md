@@ -1,37 +1,41 @@
-# Setup walkthrough
+# Business installation walkthrough
 
-## 1. Prove the offline installation
+## 1. Install safely
 
-Install Node.js 24+. From the repository directory run `npm test`, `npm run demo`, then `npm run dashboard`. Open the loopback URL printed by the dashboard command. No installation of npm dependencies is required. SQLite is provided by Node; its API is still evolving, so validate your intended Node version using the included tests before upgrades. CI covers Node 24 on Windows and Linux.
+Install Node.js 24+. Clone/open this private repository, then run `npm run setup` and `npm start`. Open `http://127.0.0.1:3401`. Setup creates ignored local files only: `config/local.json`, `.env`, `runtime/keys.json` and the database. Re-running setup preserves configuration, keys and history and reapplies the send hold. Stop the process with Ctrl+C.
 
-The demo always loads `config/example.json` and mock providers. Its generated approval/release records, message identifiers, source text and bookings are fictional and remain in ignored runtime directories. No external service is contacted. Keep this database separate from any real business database.
+The operator access key is the `admin` value in `runtime/keys.json`; read that file privately and paste the value into the console. Release, preflight and inbound keys remain in the trusted server process. Do not put any key into a URL or public document. The console binds to loopback and requires a short-lived authenticated session and same-origin mutation token. It is not a public web deployment.
 
 ## 2. Configure one business
 
-Copy `config/example.json` to ignored `config/local.json` and `.env.example` to ignored `.env`. The environment file selects `ENGINE_CONFIG=config/local.json` and a private `ENGINE_DATABASE=runtime/business.sqlite`. Change the example tenant ID before using a new database. An existing database rejects another tenant.
+Edit `config/local.json`: tenant ID; business name, sender/Reply-To/display name, website, signature and actual postal address; offerings; ICP/markets; approved source hosts/URLs; advisory weights; timezone/weekdays/window, first-touch and combined caps, spacing and up to three follow-up offsets; booking URL and integration IDs; owner email and digest time. Keep scores/headcount advisory. Use a fresh `ENGINE_DATABASE` path for a new tenant; another business's database is refused before migrations.
 
-Edit every identity field, actual signature and postal address; offer descriptions/tags; ICP sectors and optional preferred headcount; markets; allowlisted company source hosts and URLs; priority weights; timezone, weekdays, window, caps, spacing and cadence; real booking URL and integration IDs. Keep headcount and priority advisory. Review market-specific permission requirements with your business's responsible operator. A published email route alone does not establish outreach permission.
+The environment file loads with the application commands. Keep every send/write switch false and dry run true. Existing shell environment values take precedence over Node's environment file, but the durable installation hold still prevents activation. `INTEGRATION_READS_ENABLED` and `RESEARCH_NETWORK_ENABLED` are separate, explicit read-only permissions; enabling them does not enable sending. `OWNER_EMAIL_ENABLED` also defaults false.
 
-Keep all send/write toggles disabled. The environment file is not loaded implicitly by npm. Either export variables in your shell or use Node's environment-file support as shown below.
+## 3. Review one company
 
-## 3. Prepare one reviewed candidate locally
+Use Companies to add a real company, supported fact, named person/role, exact published inbox and their source URLs. Shared inboxes and official alternate-provider business routes are accepted when separately verified. Pasted quotations are labeled operator imports, never production captures. Add the reviewed company host to the allowlist, enable research reads deliberately, then refresh official sources. Unsupported or stale facts remain gaps.
 
-An input JSON file in `runtime/` has three fields: `prospect`, `pages` and `draft`. [The fictional scenario](../fixtures/scenario.mjs) is the full data contract example. Build JSON using your researched company, exact person/role quotation, separately published route and supported company fact. Source pages contain URL, captured text, digest, checked timestamp and capture mode; use the PublicWeb adapter for actual sources. Draft sections refer to claim IDs and contain only supported facts, honest possibilities, configured offer wording and one final question.
+Author an initial through the console's paragraph editor. Inspect its exact recipient, subject/body, source evidence and gaps. Record reviewed permission/basis with an expiry, and check all six review items individually. An initial may authorize up to three individually authored follow-ups; every touch still needs fresh evidence and its own release. Every response requires new review of current inbound context. The console has no send or activation control.
 
-```sh
-node --env-file=.env scripts/review.mjs --input=runtime/review.json
-```
+For file-based imports, put authorized inputs in ignored runtime storage and use `node --env-file=.env scripts/review.mjs --input=runtime/review.json`. The fictional scenario documents the neutral data contract. Rewriting an unattempted draft clears approval; stale console edits are refused. Attempted copy is immutable.
 
-The command stores research and exact copy locally, prints gaps, and leaves the message **unapproved and unreleased**. It never sends, invokes OAuth, writes Notion or creates a Gmail draft. Re-importing an unattempted draft clears existing approval and release. Existing attempted messages are immutable. Review the current stored draft before importing a replacement.
+## 4. Verify the business's accounts without sending
 
-## 4. Integrate trusted operator actions
+Configure your own Google OAuth and optional Notion/Calendar integrations. No original account or ID is included. Enable read-only integration/source access deliberately. Name the responsible human with `VERIFICATION_REVIEWER`, then run `npm run verify -- integrations`. It checks account identity, configured source access, fresh mailbox-worker health and enabled integration mappings. Optional unconfigured Notion/Calendar adapters do not block use without those integrations.
 
-`openEngine()` in `src/bootstrap.mjs` creates a local engine using configuration and environment credentials. `Engine.approve()` is the authenticated human boundary. `Engine.release()` is the trusted evaluator boundary, requiring verified evidence, permission and a separately signed preflight proof. `Engine.deliver()` returns `dry_run` with defaults. No provided command enables live flags, produces production sender proof, grants live approval, or launches an unattended scheduler.
+For mailbox proof, configure a distinct inbox you own and that inbox's separate read-only OAuth credentials. Enter six provider message IDs in `verification.references`: `sent`, `received`, `replySent`, `replyReceived`, `optOutSent`, `optOutReceived`. Run `npm run verify -- mailbox`. The command reads existing artifacts; it neither sends, drafts, approves, resets suppression nor activates. It requires matching actual Sent/received IDs, exact initial subject/body, aligned receiving authentication and TLS, mirrored owned replies, real unsubscribe intent and fresh timestamps. It records exact-route suppression and local refusal for the observed controlled inbox.
 
-Use distinct random approval/release/inbound/preflight keys in a trusted local process. Store an authenticated reviewed permission record keyed by the recipient with `allowed`, `basis`, `reviewedBy` and `expiresAt`. This is an operator decision, not inferred consent. Keep suppressed/history records intact. Detailed integration contracts and gaps are documented in `docs/integrations/` and `SECURITY.md`.
+If those artifacts do not exist or have expired, verification fails. A fresh real owned-inbox experiment requires a separately authorized business action outside this send-disabled installation. Do not invent IDs, copy simulated artifacts or edit expiry to pass. Proofs expire within one hour; future live use needs current proof throughout the intended operating window.
 
-## 5. Live readiness is a separate scope
+## 5. Operate the held installation
 
-Before a future live rollout: implement the trusted production artifact collector, set up your own OAuth/integration credentials, verify actual received sender authentication/TLS and reply/suppression/opt-out handling using an explicitly authorized owned inbox, validate actual Calendar association, add an authenticated worker/scheduler and owner notifications, and review the current exact copy. A simulation cannot serve as this proof. Any live communication or rollout needs its own authorization; installation does not grant it.
+While `npm start` runs, the worker evaluates scheduled work each minute. Operations shows durable jobs and local owner digest/alert previews. It performs no external reads with defaults and no outbound communication while held. `npm run worker` runs one safe cycle; `npm run doctor` lists real readiness gaps; `npm run backup` creates a consistent private SQLite backup.
 
-The immediate onboarding next step is to run the offline demo and copy the business configuration. You do not need credentials or a license decision to inspect and evaluate this private local reference within your authorized business.
+Use an existing machine for persistent operation and optional service templates in `deploy/`. No operating-system service, Codex automation or scheduled task is installed automatically. Verify restart/recovery and backup restore on the target machine. Do not expose the loopback console through a proxy without separately designing authentication and network controls.
+
+## 6. Future activation remains separate
+
+Installing, passing tests, collecting proof or checking message review does not grant sending permission. A future trusted operator must explicitly authorize verified activation using the library boundary, with all readiness checks passing, then deliberately configure the transport flags. There is no packaged one-click unlock. Activation expires within one hour, and exact-message approval/release, source freshness, suppression/history and caps still apply. This completion leaves the installation held.
+
+The immediate onboarding action is `npm run setup`, followed by business configuration and `npm start`. No credential is needed for the offline demo or tests.

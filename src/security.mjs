@@ -11,7 +11,7 @@ export function unseal(envelope,key) {
   if(!timingSafeEqual(expected,Buffer.from(envelope.signature,'hex')))throw Error('Release authentication failed');
   return JSON.parse(envelope.payload);
 }
-export const PREFLIGHT_CHECKS=['receivedAuthentication','tls','replyRouting','suppression','optOut','inboundHealthy'];
+export const PREFLIGHT_CHECKS=['receivedAuthentication','tls','replyRouting','suppression','optOut','inboundHealthy','exactMessage'];
 export function preflightGaps(envelope,key,config,now,production) {
   try {
     const p=unseal(envelope,key);

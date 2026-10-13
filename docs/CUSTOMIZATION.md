@@ -1,6 +1,6 @@
 # Customization and migration to a new business
 
-Use a new private configuration and a fresh database for each business. No original company's records or integration IDs are bundled. Start with fictional data to understand the gates, then research one candidate for your own offering.
+Run the idempotent local setup, then use a new private configuration, tenant and fresh database for each business. The implementation includes an operator console, scheduler and evidence collector, with all sending held. No original company's records or integration IDs are bundled. Start with fictional data to understand the gates, then research one candidate for your own offering.
 
 | Setting | Replace with |
 |---|---|
@@ -20,6 +20,6 @@ Offer routing is a human-selected `offerId` with advisory tag relevance. The cor
 
 For migration from another CRM, import only authorized data into an ignored local file. Map companies, people, route evidence and activity to the neutral entities; deduplicate by stable IDs and domain/route. Old scores, headcount fields, inferred emails and CRM stages are not proof. Re-capture sources, verify contacts, review permission and author exact drafts anew. Do not import old approvals or releases. Import historical provider thread/attempt and suppression state through a reviewed migration so previous contact and opt-outs cannot be forgotten. No general historical-import CLI is shipped; use an audited local migration with dry-run counts and backup/rollback.
 
-Every source/policy/identity change can invalidate unsent approvals. A sent initial's follow-up authorization remains tied to the original immutable message and business policy, while new touches need current sources and new exact releases. Preserve sent history and human edits. Notion is a system-owned projection; its old checkboxes cannot silently authorize new delivery.
+Every source/policy/identity change can invalidate unsent approvals. A sent initial's follow-up authorization remains tied to the original immutable message and business policy, while new touches need current sources and new exact releases. Preserve sent history and human edits. Notion is a system-owned projection; its old checkboxes cannot silently authorize new delivery. Current human review uses the authenticated local console and exact-copy version checks. Configure owner alerts/digest timing and the owned verification inbox separately for each business.
 
 When adding a new adapter: inject its transport, verify identity, use deterministic integration IDs, preserve purpose/thread boundaries and uncertain outcomes, and add isolated failure tests before live integration verification. Record any dependency's actual license and notices. Do not copy private third-party source just because the destination repository is private.

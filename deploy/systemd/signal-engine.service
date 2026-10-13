@@ -1,0 +1,24 @@
+[Unit]
+Description=Signal to Meeting send-disabled local business application
+After=network.target
+
+[Service]
+Type=simple
+User=signal-engine
+WorkingDirectory=/srv/signal-to-meeting-engine
+ExecStart=/usr/bin/node --env-file-if-exists=.env scripts/serve.mjs
+Environment=DRY_RUN=true
+Environment=LIVE_SEND_ENABLED=false
+Environment=CONTROLLED_AUTONOMY_ENABLED=false
+Environment=OWNER_EMAIL_ENABLED=false
+Environment=INTEGRATION_WRITES_ENABLED=false
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/signal-to-meeting-engine/runtime
+
+[Install]
+WantedBy=multi-user.target

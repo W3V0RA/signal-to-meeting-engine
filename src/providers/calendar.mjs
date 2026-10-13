@@ -1,6 +1,11 @@
 export class GoogleCalendar {
   mode='google-calendar';
   constructor({gmail,calendarId,fetcher=fetch}){this.gmail=gmail;this.calendarId=calendarId;this.fetcher=fetcher;}
+  async check() {
+    if(!this.calendarId)throw Error('Calendar ID required');
+    const response=await this.fetcher(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(this.calendarId)}`,{headers:{Authorization:`Bearer ${await this.gmail.token()}`},signal:AbortSignal.timeout(15000)});
+    if(!response.ok)throw Error(`Calendar access failed (${response.status})`);return response.json();
+  }
   async event(eventId) {
     if(!this.calendarId||!eventId)throw Error('Calendar and associated event ID required');
     const response=await this.fetcher(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(this.calendarId)}/events/${encodeURIComponent(eventId)}`,{headers:{Authorization:`Bearer ${await this.gmail.token()}`},signal:AbortSignal.timeout(15000)});

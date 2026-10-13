@@ -36,7 +36,7 @@ for(const mode of ['dryRun','liveSend','autonomy'])test(`missing live gate ${mod
 });
 test('simulated release and evidence cannot be promoted to real transport',async()=>{
   const f=fixture();f.ready();f.engine.flags={dryRun:false,liveSend:true,autonomy:true};f.mail.mode='gmail';
-  await assert.rejects(f.engine.deliver(f.s.draft.id),/Synthetic|Simulation|Fictional/);assert.equal(f.mail.sent.length,0);assert.equal(f.store.db.prepare('SELECT COUNT(*) n FROM attempts').get().n,0);f.store.close();
+  await assert.rejects(f.engine.deliver(f.s.draft.id),/Synthetic|Simulation|Fictional|send hold/);assert.equal(f.mail.sent.length,0);assert.equal(f.store.db.prepare('SELECT COUNT(*) n FROM attempts').get().n,0);f.store.close();
 });
 test('MIME preserves exact UTF-8 body and thread headers without extra footer',()=>{
   const f=fixture(),m=f.store.get('message',f.s.draft.id),wire=rawMessage({...m,from:f.config.business.sender,replyTo:f.config.business.replyTo,displayName:f.config.business.displayName,rfcParentId:'<parent@example.org>'});

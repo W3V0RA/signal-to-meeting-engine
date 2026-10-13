@@ -2,9 +2,9 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync,readdirSync } from 'node:fs';
 import { join,relative } from 'node:path';
 const root=process.cwd(),staged=process.argv.includes('--staged');
-function fallback(dir){return readdirSync(dir,{withFileTypes:true}).filter(e=>!['.git','node_modules','runtime','work'].includes(e.name)).flatMap(e=>e.isDirectory()?fallback(join(dir,e.name)):[relative(root,join(dir,e.name)).replaceAll('\\','/')]);}
+function fallback(dir){return readdirSync(dir,{withFileTypes:true}).filter(e=>!['.git','node_modules','runtime','work'].includes(e.name)&&!(e.name.startsWith('.env')&&e.name!=='.env.example')&&relative(root,join(dir,e.name)).replaceAll('\\','/')!=='config/local.json').flatMap(e=>e.isDirectory()?fallback(join(dir,e.name)):[relative(root,join(dir,e.name)).replaceAll('\\','/')]);}
 let paths;
-try{paths=execFileSync('git',staged?['diff','--cached','--name-only','--diff-filter=ACMR']:['ls-files','--cached','--others','--exclude-standard'],{encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim().split(/\r?\n/).filter(Boolean);}catch{if(staged)throw Error('Staged scan requires Git');paths=fallback(root);}
+try{paths=execFileSync('git',staged?['ls-files','--cached']:['ls-files','--cached','--others','--exclude-standard'],{encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim().split(/\r?\n/).filter(Boolean);}catch{if(staged)throw Error('Staged scan requires Git');paths=fallback(root);}
 const checks=[
   ['private key',/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/],
   ['provider token',/\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{35,}|sk-[A-Za-z0-9]{24,}|xox[baprs]-[A-Za-z0-9-]{20,})\b/],

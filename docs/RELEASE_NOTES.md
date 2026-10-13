@@ -1,4 +1,10 @@
-# Initial private reference release
+# Release history
+
+## Version 0.2 — Send-disabled business installation
+
+The operator console, scheduler, owner outbox, broader inbound parser, evidence collector, independent installation hold, migrations, backup and exact Sent reconciliation are now implemented. See [implementation acceptance](IMPLEMENTATION_ACCEPTANCE.md) for 189 passing tests, six evaluations and fresh-install/restore verification. Business-specific live proof remains pending and no sending was enabled.
+
+## Version 0.1 — Initial private reference release
 
 Validated locally on Node.js 24.19.0 on Windows:
 

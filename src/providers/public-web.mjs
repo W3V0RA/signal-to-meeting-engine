@@ -2,6 +2,8 @@ import { lookup } from 'node:dns/promises';
 import https from 'node:https';
 import { isIP } from 'node:net';
 import { snapshot } from '../evidence.mjs';
+import { htmlText } from '../text.mjs';
+import { hash } from '../config.mjs';
 export function publicIPv4(address) {
   if(isIP(address)!==4)return false;
   const [a,b]=address.split('.').map(Number);
@@ -27,8 +29,9 @@ export class PublicWeb {
       });req.setTimeout(10000,()=>req.destroy(Error('Source timeout')));req.on('error',reject);
     });
     // Preserve a digest of captured text. This bounded extractor does not infer claims from HTML.
-    const normalized=text.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&amp;/g,'&').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
-    return snapshot(url,normalized,now,'public-web');
+    const normalized=htmlText(text,{contactRoutes:true}).replace(/\s+/g,' ').trim();
+    const links=[...text.matchAll(/href=["']([^"'#]+)["']/gi)].flatMap(match=>{try{const u=new URL(match[1],url);return u.protocol==='https:'&&!u.username&&!u.password&&!u.port?[u.origin+u.pathname]:[];}catch{return [];}});
+    return {...snapshot(url,normalized,now,'public-web'),rawDigest:hash(text),links:[...new Set(links)]};
   }
   async discover(sources,now){return Promise.all(sources.map(url=>this.fetch(url,now)));}
 }

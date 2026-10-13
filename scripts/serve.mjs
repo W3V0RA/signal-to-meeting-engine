@@ -1,0 +1,11 @@
+import { createServer } from 'node:http';
+import { openApplication } from '../src/bootstrap.mjs';
+import { createConsole } from '../src/console.mjs';
+const application=openApplication(),port=Number(process.env.ENGINE_PORT??3401);
+if(!Number.isInteger(port)||port<1024||port>65535)throw Error('Use a valid local port');
+const server=createServer(createConsole(application,{port}));
+let active=Promise.resolve(),closing=false;
+const timer=setInterval(()=>{if(!closing&&!application.worker.running)active=application.worker.tick().catch(()=>application.engine.store.holdSending('Worker failure; inspect local audit'));},Math.max(10,application.engine.config.operations?.tickSeconds??60)*1000);
+server.listen(port,'127.0.0.1',()=>console.log(`Business console: http://127.0.0.1:${port}\nExternal sending remains held. Sign in using the admin key in your ignored local key file.`));
+const stop=()=>{if(closing)return;closing=true;clearInterval(timer);server.close(async()=>{await active;application.engine.store.close();process.exit(0);});};
+process.on('SIGINT',stop);process.on('SIGTERM',stop);

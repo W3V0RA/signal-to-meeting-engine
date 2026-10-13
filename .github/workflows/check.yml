@@ -23,3 +23,8 @@ jobs:
       - run: npm ci --ignore-scripts --offline
       - run: npm run check
       - run: npm run demo
+      - run: npm run setup
+      - run: npm run doctor
+      - run: npm run worker
+      - run: npm run backup
+      - run: npm run scan

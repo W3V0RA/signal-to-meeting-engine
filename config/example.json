@@ -22,5 +22,7 @@
     "optOut":"If you prefer no further emails, reply unsubscribe.",
     "writing":{"subjectWords":[3,7], "subjectCharacters":[36,50], "firstTouchWords":[50,80]}
   },
-  "integrations": {"gmailUser":"me", "notionDataSourceId":"", "calendarId":"", "bookingUrl":"https://example.org/book", "ownerEmail":"alex@example.org"}
+  "integrations": {"gmailUser":"me", "notionDataSourceId":"", "calendarId":"", "bookingUrl":"https://example.org/book", "ownerEmail":"alex@example.org", "routeAliases":{}},
+  "verification": {"ownedInbox":"", "references":{}},
+  "operations": {"consoleUrl":"http://127.0.0.1:3401", "digestTime":"08:00", "tickSeconds":60, "sessionMinutes":15}
 }

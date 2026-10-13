@@ -1,33 +1,30 @@
 # Capability and verification matrix
 
-Statuses describe this new repository. Predecessor documentation was reconciled with code/tests and the latest operating contract; unfinished transport/digest behavior was not treated as proven.
+The application is implemented for a single-business, send-disabled installation. Verification status describes this new repository, never the private predecessor's production system.
 
-| Capability | Generic implementation | Verification / explicit gap |
+| Capability | Implemented behavior | Verification limit |
 |---|---|---|
-| Business identity, offers, ICP, markets and integrations | Configuration file | Validated offline; real values not configured |
-| Discovery and source watch | Mock discovery and bounded configured URL fetching | Offline discovery proven; broad search, automated signal extraction/change scheduler absent |
-| Evidence and source-to-claim | Captured text/digest/time and exact cited fact paragraphs | Tested; arbitrary semantic paraphrase cannot clear this bounded verifier |
-| Company and named contact | Exact domain, verified business flag, person/role quote, independently published address token | Tested; authenticated human must establish business relevance/ownership, parser has limited HTML normalization |
-| Shared and official free-mail routes | Exact official page publication; no same-email-domain restriction | Tested with fictional alternate-domain routes; greeting uses researched first name |
-| Headcount and scores | Advisory preference and weights | Missing/out-of-range/low values never block release |
-| Outcome-first and v2 writing | Configurable format and typed paragraphs, one soft question, portfolio repetition checks | Tested; subjective truth/voice needs human review; third-party claims/text not imported |
-| Exact approval | Human authentication and six checks; content/evidence/config digest | Tested; there is no public approval endpoint or Notion-checkbox authority |
-| Trusted release | HMAC exact message, tenant, sender, purpose, thread, touch, source and proof binding; ≤1h expiry | Forgery/change/expiry tested; real production sender-proof collector remains absent |
-| Suppression, consent, history and duplicates | Durable route/domain suppression; reviewed permission; provider read; atomic uniqueness | Tested offline; actual mailbox history and permission basis not verified |
-| Caps, pacing and timezone | Initial/combined daily caps, spacing and local weekday window/DST | Tested; overflow remains held; actual worker scheduling not installed |
-| Gmail delivery | OAuth identity/sendAs checks, exact plain-text MIME, thread references | Stub-transport tests; no credentials, draft, send or received-mail proof performed |
-| Replies, bounces, opt-outs | Plain-text reply rules and structured delivery-status parsing; authenticated ingestion | Mock parser/lifecycle tested; rich HTML-only replies, alternate routes and mailbox-wide bounce reconciliation need extension/live proof |
-| Follow-ups | Three personalized authoring tasks, initial sequence permission, new release per touch | Mock dispatch/cancellation tested; human/local authoring and scheduler needed |
-| Responses | Current inbound/thread association and separate approval; newer replies revoke pending approvals | Mock response transport tested; live response authoring/approval/transport not proven |
-| Booking | Link only after explicit interest and approved response; specified accepted Calendar event; cancellation | Mock booking and adapter reads tested; actual event association and delivery not proven |
-| Notion sync | Stable-ID system-owned projection, write flag, local checkpoint | Mock/HTTP stub tested; no existing page changed; live workspace setup remains required |
-| Dashboard | Read-only local demo snapshot and metric library | Local render checked; no production operator UI |
-| Learning, evaluations, audit and costs | Observational rates, synthetic labeled evaluation, durable audit and explicit cost rows | Tested; no automatic policy change, training/performance promises or verified revenue |
-| Owner alerts and daily digest | Durable pending owner-alert work item | Actual notification composition, scheduling and delivery absent; no owner email sent |
-| Multi-business use | Independent business config/database | Sequential isolated deployments; hosted multi-tenant isolation and distributed queue absent |
+| Installation and customization | Idempotent setup, private random keys, environment/config templates, database tenant guard, readiness doctor | Fresh-clone setup tested; each business config/account remains its responsibility |
+| Operator console | Loopback login, expiring HttpOnly/Strict session, origin/CSRF checks, individual six-item exact review, stale-copy protection, paragraph authoring and evidence inspection | Handler/security tests and actual browser inspection; public hosting excluded |
+| Research/discovery | Allowlisted pinned HTTPS capture, encoded/mailto route extraction, configured source watch/change work and candidate-domain hints | Bounded sources, not unrestricted web search; research suggestions never imply verified business facts |
+| Evidence/contact | Exact cited quotes, source hashes/time/domain, named role and independently published exact route | Arbitrary semantic paraphrase and relevance still need reviewed evidence; no model authority |
+| Advisory priority | Configurable offers/weights, optional headcount and scores | Never a standalone sending veto |
+| Approval/release | Exact human review, signed expiring tenant/identity/purpose/thread/touch/source-bound release, change invalidation | Real business proof is required; simulations never clear production |
+| Installation readiness | Persistent independent send hold, authenticated real-evidence collector, business-bound integration checks, distinct explicit expiring activation | All live verification pending here; no activation CLI or console route |
+| Scheduling | Durable jobs, minute service loop, per-job leases/heartbeat, bounded read retries, restart recovery and held overflow | Host must remain running; no OS or Codex task installed; not a distributed queue |
+| Gmail transport | OAuth identity, exact MIME, reserved Message-ID, atomic admission, combined owner/prospect caps, pacing and uncertain hold | Stub contracts tested; no live send, draft or recipient receipt executed |
+| Inbound | Plain/HTML/attached text, quoted-context exclusion, exact aliases, unknown-participant cancellation, same-thread and mailbox-wide structured DSNs | Unsupported/unmatched events hold sending for review; no unrestricted natural-language guarantee |
+| Follow-ups/responses | Persistent individual authoring work, current thread context, purpose-bound dispatch, immediate cancellation and fresh response approvals | Humans author context-specific copy; no paid model or automatic fabricated prose |
+| Booking | Explicit-interest response gate, reviewed event association, accepted Calendar readback, durable cancellation and owner alert | No real meeting created; actual business event access/association remains to verify |
+| Notion | Read/property check and stable-ID system-owned projection; writes separately gated | No original page changed; live write/field behavior requires authorized business verification |
+| Owner digest/alerts | Daily local-time individual-review digest, inbound/booking alerts, durable owner-only outbox, shared caps and uncertainty rules | Preview/mock dispatch tested; actual owner email delivery not claimed |
+| Recovery/persistence | Checksummed migrations, legacy adoption validation, downgrade refusal, durable audit, consistent backup and exact provider-Sent reconciliation | No uncertainty reset or automatic send retry; protect local files/backups |
+| Evaluation/learning/costs | Isolated regression suite, labeled synthetic cases, observed outcome rates and explicit cost accounting | No training, performance, verified revenue or automatic policy-change claims |
 
-**VERIFIED COMPLETE:** runnable offline reference, generic settings and templates, safe defaults, original provenance boundary, persisted lifecycle and tested policy controls.
+**VERIFIED COMPLETE:** generic local implementation, setup/console/scheduler/recovery, default holds, documented onboarding, isolated tests and synthetic evaluations.
 
-**TESTED BUT NOT PROVEN:** integration contracts with injected transports and mock lifecycle, MIME, reply parsing, Notion projection and Calendar association. These do not prove real delivery, bookings, revenue, or production reliability.
+**TESTED BUT NOT PROVEN:** actual Gmail/Notion/Calendar/public-source service behavior, received delivery and account-specific signature transformations, owner notifications, real booking/cancellation, ongoing provider reliability.
 
-**BLOCKED for live rollout:** actual credentials and independently verified sender artifacts; live inbox/cancellation/booking checks; scheduler and owner digest implementation; production authorization and any licensing decision needed for wider distribution. Offline use is not blocked by these items.
+**PENDING FOR EACH BUSINESS:** accurate identity/permission/configuration, actual credentials, existing fresh controlled owned-inbox artifacts, connected integration checks, target-machine service/backup review and explicit future activation. These are installation verification requirements, not missing software placeholders. Sending remains held until they pass and separately authorized activation occurs.
+
+Out of scope: a hosted multi-tenant platform, general web-wide prospect search, autonomous model authoring, arbitrary semantic truth checking, bidirectional CRM checkbox approval and revenue/accounting integrations. They are not prerequisites for the local reviewed workflow.
