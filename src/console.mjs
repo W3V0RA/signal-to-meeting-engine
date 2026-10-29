@@ -6,11 +6,12 @@ import { dashboard,learning } from './reporting.mjs';
 import { refreshProspectSources } from './discovery.mjs';
 import { scenario } from '../fixtures/scenario.mjs';
 import { snapshot } from './evidence.mjs';
+import { dailyDiscoveryProgress } from './daily-discovery.mjs';
 
 function requireVersion(engine,id,digest) {if(typeof digest!=='string'||engine.context(id).digest!==digest)throw Error('Draft changed; reload its current exact copy before reviewing or editing');}
 function state(application) {
   const {engine}=application,store=engine.store;
-  return {business:engine.config.business,timezone:engine.config.policy.timezone,offers:engine.config.offers,readiness:readiness(engine),metrics:dashboard(store),learning:learning(store),
+  return {setupAvailable:!!application.interview,setupRequired:!!application.interview&&engine.config.business.website==='https://example.org',restartRequired:application.interviewRestartRequired===true,business:engine.config.business,timezone:engine.config.policy.timezone,offers:engine.config.offers,preApprovalRequired:engine.config.policy.requirePreApprovalRelease===true,authoringBriefRequired:engine.config.policy.requireAuthoringBrief===true,bookingStrategy:engine.config.policy.booking?.strategy??'interest-only',bookingDurationMinutes:engine.config.policy.booking?.durationMinutes??null,discoveryProgress:dailyDiscoveryProgress(engine),readiness:readiness(engine),metrics:dashboard(store),learning:learning(store),
     candidates:store.list('discoveryCandidate'),prospects:store.list('prospect'),messages:store.list('message').map(m=>{
       const ctx=engine.context(m.id);let gaps;
       try{gaps=engine.baseGaps(m.id,engine.clock(),true);}catch{gaps=['Research or message structure needs repair'];}
@@ -22,7 +23,7 @@ function state(application) {
 
 export function createConsole(application,{port=3401,clock=()=>Date.now()}={}) {
   const sessions=new Map(),failures=new Map(),origin=`http://127.0.0.1:${port}`;
-  const files={'/':{name:'index.html',type:'text/html; charset=utf-8'},'/app.js':{name:'app.js',type:'text/javascript; charset=utf-8'},'/app.css':{name:'app.css',type:'text/css; charset=utf-8'}};
+  const files={'/':{name:'index.html',type:'text/html; charset=utf-8'},'/app.js':{name:'app.js',type:'text/javascript; charset=utf-8'},'/setup.js':{name:'setup.js',type:'text/javascript; charset=utf-8'},'/app.css':{name:'app.css',type:'text/css; charset=utf-8'}};
   const security={'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",'X-Content-Type-Options':'nosniff','Cache-Control':'no-store','Referrer-Policy':'no-referrer'};
   function send(res,status,data,headers={}){res.writeHead(status,{...security,'Content-Type':'application/json; charset=utf-8',...headers});res.end(typeof data==='string'?data:JSON.stringify(data));}
   async function json(req) {
@@ -53,11 +54,16 @@ export function createConsole(application,{port=3401,clock=()=>Date.now()}={}) {
       if(!session||session.expires<=clock()){sessions.delete(sid);return send(res,401,{error:'Sign in to review this business'});}
       if(req.method==='GET'&&url.pathname==='/api/state')return send(res,200,state(application));
       if(req.method==='GET'&&url.pathname==='/api/session')return send(res,200,{csrf:session.csrf,reviewer:session.reviewer});
+      if(req.method==='GET'&&url.pathname==='/api/setup') {if(!application.interview||application.interviewRestartRequired)throw Error('Restart the application before using setup');return send(res,200,application.interview.view());}
       if(!mutation||!url.pathname.startsWith('/api/'))return send(res,404,{error:'Unknown operation'});
       try{authenticate(req.headers['x-csrf-token'],session.csrf);}catch{return send(res,403,{error:'Review session token required'});}
       const input=await json(req),e=application.engine;
+      if(url.pathname==='/api/logout'){sessions.delete(sid);return send(res,200,{signedOut:true},{'Set-Cookie':'engine_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'});}
+      if(application.interviewRestartRequired)throw Error('Restart the application before making further changes');
+      if(url.pathname==='/api/setup/preview'){if(!application.interview)throw Error('Run npm run setup to enable the interview');return send(res,200,application.interview.preview(input));}
+      if(url.pathname==='/api/setup/save'){if(!application.interview)throw Error('Run npm run setup to enable the interview');return send(res,200,application.interview.save(input,{reviewer:session.reviewer}));}
       if(url.pathname==='/api/example') {
-        if(e.config.tenant!=='fictional-demo'||!e.flags.dryRun||e.flags.liveSend)throw Error('Fictional examples use a separate disabled demo installation');
+        if(e.config.business.website!=='https://example.org'||!e.flags.dryRun||e.flags.liveSend)throw Error('Fictional examples use a separate disabled demo installation');
         const sample=scenario(e.clock());e.research(sample.prospect,sample.pages);return send(res,200,e.draft(sample.draft));
       }
       if(url.pathname==='/api/company') {
@@ -72,7 +78,6 @@ export function createConsole(application,{port=3401,clock=()=>Date.now()}={}) {
         const pages=[...textByUrl].map(([url,text])=>snapshot(url,text,e.clock(),'operator-import'));
         return send(res,200,e.research(prospect,pages));
       }
-      if(url.pathname==='/api/logout'){sessions.delete(sid);return send(res,200,{signedOut:true},{'Set-Cookie':'engine_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'});}
       if(url.pathname==='/api/research') {
         if(!input.prospect?.id||!Array.isArray(input.pages)||input.pages.length>20)throw Error('Prospect and up to twenty source captures required');
         return send(res,200,e.research(input.prospect,input.pages.map(p=>({...p,mode:'operator-import'}))));
@@ -87,7 +92,7 @@ export function createConsole(application,{port=3401,clock=()=>Date.now()}={}) {
       }
       if(url.pathname==='/api/release') {
         requireVersion(e,input.id,input.digest);const proof=e.store.get('installation','preflight');
-        return send(res,200,e.release(input.id,{token:e.keys.admin,preflight:proof?.envelope,production:true}));
+        return send(res,200,e.release(input.id,{token:e.keys.admin,preflight:proof?.envelope,production:true,preApproval:input.preApproval===true}));
       }
       if(url.pathname==='/api/consent') {
         if(!email(input.email)||input.allowed!==true||!input.basis?.trim()||!Number.isFinite(Date.parse(input.expiresAt))||Date.parse(input.expiresAt)<=e.clock().getTime())throw Error('Reviewed route, basis and future expiry are required');

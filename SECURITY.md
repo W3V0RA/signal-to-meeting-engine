@@ -8,6 +8,8 @@ This project runs locally for one business per database. It exposes an authentic
 - The demo always constructs mock adapters and simulation proof, ignoring live credentials/flags.
 - An authenticated human performs every initial approval and every response approval. Six review checks must be explicitly true.
 - A sequence permission can authorize follow-up authoring and execution; each new exact message still requires a passing purpose-bound release. Configuration or parent authorization changes revoke that path.
+- An optional pre-approval baseline requires an authenticated, unapproved technical evaluation before a human can approve an initial or response. It does not itself approve, queue or send. Changed copy invalidates the current baseline, and evaluated evidence and prior approval snapshots remain in local history.
+- An optional cold booking-link experiment requires the exact configured Google schedule identity, a current signed check, and a named human duration review. It cannot be used in follow-ups 1 or 2. Response links still require genuine interest and an individual response approval.
 - No model may hold admin, release, inbound or preflight signing keys. Possession of local store write access or keys is trusted operator authority, not an untrusted API.
 
 Setup generates separate random keys of 32 bytes for approval, release, inbound and preflight into ignored runtime storage. Keep them outside Git, in a local secret store or ignored environment file. A key change invalidates releases; it does not turn off suppression. Never log tokens or place credentials in command-line arguments, screenshots, database records or Notion properties. `INBOUND_AUTH_TOKEN` is a separate authenticated ingestion credential.

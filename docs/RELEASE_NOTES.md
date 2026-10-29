@@ -1,5 +1,11 @@
 # Release history
 
+## Unreleased — configurable controls and local onboarding
+
+Adds optional distinct first-touch spacing, an explicitly configurable owner-notification budget boundary, neutral shared-inbox greetings, and a digest that can read an actual configured Notion saved view without substituting an approximate count. Optional exact-copy pre-approval baselines, immutable local source/approval history, a three-part authoring brief and portfolio review, and a verified Google booking-link experiment adapt recent operational controls without carrying business data into the repository. Local exact-copy approval counts and the separate view count are not send-eligibility claims. Existing configurations retain their previous behavior when the new options are omitted. Local installation steps cover prerequisites, cloning, setup, sign-in, offline tests and troubleshooting.
+
+This generic installation is not the hosted private deployment. The booking experiment requires a business's own Google schedule, a live identity check and a named human duration review; it is disabled unless configured. The local application cannot automatically conduct the private hosted deployment's recurring owned-inbox tests or autonomously discover and author five new contacts a day. No real recipient, business credentials, production history or proof was migrated. Offline tests do not establish live delivery or funding outcomes.
+
 ## Version 0.2 — Send-disabled business installation
 
 The operator console, scheduler, owner outbox, broader inbound parser, evidence collector, independent installation hold, migrations, backup and exact Sent reconciliation are now implemented. See [implementation acceptance](IMPLEMENTATION_ACCEPTANCE.md) for 189 passing tests, six evaluations and fresh-install/restore verification. Business-specific live proof remains pending and no sending was enabled.

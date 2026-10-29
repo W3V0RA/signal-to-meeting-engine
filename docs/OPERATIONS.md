@@ -14,9 +14,9 @@ The process must stay running. No OS service or Codex task is created by setup. 
 
 Read integration access is separate from sending. Mailbox scans inspect actual known threads and mailbox-wide delivery-status messages. Plain/HTML/attached text is bounded; quoted unsubscribe language is excluded from current intent. Exact configured aliases can establish interest; an unknown thread participant stops the sequence and cannot automatically establish booking interest. Unmatched DSNs and read/parse failures hold sending rather than assuming no reply.
 
-Read the actual inbound text in the console before authoring a response. Every reply stops follow-ups; bounces/opt-outs persist exact-route suppression. New inbound invalidates pending response approvals. One initial review may authorize up to three individually personalized touches, each with current evidence and its own purpose release. No model fabricates replacement copy or changes authorization.
+Read the actual inbound text in the console before authoring a response. Every reply stops follow-ups; bounces/opt-outs persist exact-route suppression. New inbound invalidates pending response approvals. One initial review may authorize up to three individually personalized touches, each with current evidence and its own purpose release. Optional `followupMinGapDays` values enforce elapsed time since the actual preceding follow-up and shift later due dates when an earlier touch is delayed; missing actual send timestamps fail closed. No model fabricates replacement copy or changes authorization.
 
-Calendar associations are reviewed event IDs, never title keyword guesses. Actual accepted event readback is required; cancellation updates outcomes and queues an owner alert idempotently. Owner notifications are delivered only to the configured owner, share the mailbox cap/spacing, and remain preview-only while sending is held.
+Calendar associations are reviewed event IDs, never title keyword guesses. Actual accepted event readback is required; cancellation updates outcomes and queues an owner alert idempotently. Owner notifications are delivered only to the configured owner, share the mailbox cap/spacing unless a business explicitly configures separate owner capacity, and remain preview-only while sending is held.
 
 ## Uncertain sends
 

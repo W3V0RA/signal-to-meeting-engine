@@ -51,7 +51,12 @@ export class Worker {
     if(job.kind==='source_watch')return this.researchEnabled&&this.providers.research?watchSources(e,this.providers.research):{held:'Research network disabled'};
     if(job.kind==='lifecycle'){for(const m of e.store.list('message').filter(m=>m.kind==='initial'&&m.state==='sent'))e.planFollowups(m.id);return {planned:true};}
     if(job.kind==='projection')return this.providers.notion?syncNotion(e,this.providers.notion):{held:'Notion not configured'};
-    if(job.kind==='digest'){const n=approvalDigest(e,job.payload.day);return deliverOwnerNotification(e,n.id,{enabled:this.ownerEmailEnabled});}
+    if(job.kind==='digest'){
+      const viewId=e.config.operations?.notionApprovalViewId;
+      if(viewId&&(!this.readsEnabled||!this.providers.notion?.savedView))throw Error('Configured saved view requires Notion read access');
+      const notionView=viewId?await this.providers.notion.savedView(viewId,e.clock()):null;
+      const n=approvalDigest(e,job.payload.day,{notionView});return deliverOwnerNotification(e,n.id,{enabled:this.ownerEmailEnabled});
+    }
     if(job.kind==='owner_alerts') {
       const prepared=ownerAlerts(e),notifications=e.store.db.prepare("SELECT id FROM notifications WHERE kind IN ('alert','booking') AND state='pending'").all();
       for(const n of notifications)await deliverOwnerNotification(e,n.id,{enabled:this.ownerEmailEnabled});return {prepared};

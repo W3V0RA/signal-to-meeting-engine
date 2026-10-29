@@ -8,6 +8,7 @@ import { PublicWeb } from './providers/public-web.mjs';
 import { GoogleCalendar } from './providers/calendar.mjs';
 import { Notion } from './providers/notion.mjs';
 import { Worker } from './worker.mjs';
+import { createInterview } from './interview.mjs';
 export function openEngine(env=process.env) {
   const {config,flags}=loadConfig(env.ENGINE_CONFIG??'config/example.json',env);
   const mail=flags.dryRun?new MockMail(config.business):new Gmail({business:config.business,credentials:{clientId:env.GOOGLE_CLIENT_ID,clientSecret:env.GOOGLE_CLIENT_SECRET,refreshToken:env.GOOGLE_REFRESH_TOKEN}});
@@ -25,5 +26,7 @@ export function openApplication(env=process.env) {
   const notion=new Notion({token:env.NOTION_TOKEN,dataSourceId:engine.config.integrations.notionDataSourceId});
   const receiver=new Gmail({business:{sender:engine.config.verification?.ownedInbox,replyTo:engine.config.verification?.ownedInbox},credentials:{clientId:env.VERIFICATION_GOOGLE_CLIENT_ID,clientSecret:env.VERIFICATION_GOOGLE_CLIENT_SECRET,refreshToken:env.VERIFICATION_GOOGLE_REFRESH_TOKEN}});
   const worker=new Worker(engine,{mail:readMail,research,calendar,notion:engine.config.integrations.notionDataSourceId?notion:null,readsEnabled:env.INTEGRATION_READS_ENABLED==='true',researchEnabled:env.RESEARCH_NETWORK_ENABLED==='true',ownerEmailEnabled:env.OWNER_EMAIL_ENABLED==='true'});
-  return {engine,worker,providers:{mail:readMail,research,calendar,notion,receiver}};
+  const application={engine,worker,providers:{mail:readMail,research,calendar,notion,receiver}};
+  application.interview=createInterview(application,{configPath:env.ENGINE_CONFIG??'config/example.json'});
+  return application;
 }

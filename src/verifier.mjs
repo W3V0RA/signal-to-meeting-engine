@@ -4,7 +4,7 @@ import { headersOf,addressFrom,mimePart,messageText } from './text.mjs';
 import { classify } from './providers/gmail.mjs';
 
 const canonical=text=>text.replace(/\r\n/g,'\n').trim();
-const proofAge=(message,now)=>Number.isFinite(Number(message.internalDate))&&Number(message.internalDate)<=now.getTime()&&now.getTime()-Number(message.internalDate)<=3600000;
+const proofAge=(message,now,maxAge)=>Number.isFinite(Number(message.internalDate))&&Number(message.internalDate)<=now.getTime()&&now.getTime()-Number(message.internalDate)<=maxAge;
 const requireCheck=(condition,message)=>{if(!condition)throw Error(message);};
 
 // Reads existing, explicitly selected owned-inbox artifacts. It has no send or draft method.
@@ -20,7 +20,8 @@ export async function collectMailboxProof(engine,{sender,receiver,references,tok
   requireCheck(identity.sender===config.business.sender&&identity.replyTo===config.business.replyTo,'Sender identity mismatch');
   requireCheck(normalizeEmail(receiverProfile.emailAddress)===normalizeEmail(owned),'Owned receiving mailbox mismatch');
   const messages=Object.fromEntries(await Promise.all(names.map(async n=>[n,await (['received','replySent','optOutSent'].includes(n)?receiver:sender).message(references[n])])));
-  requireCheck(names.every(n=>proofAge(messages[n],now)),'Mailbox verification artifacts are missing, future dated or older than one hour');
+  const maxAge=(config.policy.senderProofHours??1)*3600000;
+  requireCheck(names.every(n=>proofAge(messages[n],now,maxAge)),'Mailbox verification artifacts are missing, future dated or too old');
   requireCheck(messages.sent.labelIds?.includes('SENT')&&messages.replySent.labelIds?.includes('SENT')&&messages.optOutSent.labelIds?.includes('SENT'),'Expected owned Sent artifacts missing');
   requireCheck(!messages.received.labelIds?.includes('SENT'),'Received artifact is a sent copy');
   const hs=Object.fromEntries(names.map(n=>[n,headersOf(messages[n].payload??{})]));
@@ -45,7 +46,7 @@ export async function collectMailboxProof(engine,{sender,receiver,references,tok
   }
   requireCheck(classify(messageText(messages.replyReceived.payload))!=='unsubscribe','Normal reply artifact is an opt-out');
   requireCheck(classify(messageText(messages.optOutReceived.payload))==='unsubscribe','Actual owned unsubscribe reply missing');
-  const expire=Math.min(...names.map(n=>Number(messages[n].internalDate)+3600000),now.getTime()+3600000);
+  const expire=Math.min(...names.map(n=>Number(messages[n].internalDate)+maxAge),now.getTime()+maxAge);
   requireCheck(expire>now.getTime(),'Verification artifacts already expired');
   const mode=simulation?'simulation':'verified-production';
   const artifact={tenant:config.tenant,configHash:hash(config),mode,ownedInbox:owned,reviewer,checkedAt:now.toISOString(),expiresAt:new Date(expire).toISOString(),references,hashes:Object.fromEntries(names.map(n=>[n,hash(messages[n])])),scope:'Existing actual mailbox artifacts plus local suppression enforcement; no new message sent'};
