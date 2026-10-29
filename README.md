@@ -17,7 +17,7 @@ npm start
 
 Open `http://127.0.0.1:3401`. Sign in with the `admin` value in your private, ignored `runtime/keys.json` file. Setup creates configuration, separate random operator credentials and a local SQLite database without overwriting existing files. Keep credentials private. For platform-specific steps, checks, configuration, and troubleshooting, follow the [local installation guide](docs/SETUP.md).
 
-Copy/customize `config/local.json` for the business before importing real data. Use a new tenant ID and database path for each business. Keep `DRY_RUN=true`, `LIVE_SEND_ENABLED=false`, `CONTROLLED_AUTONOMY_ENABLED=false` and `OWNER_EMAIL_ENABLED=false`. Read access has its own switches and is off by default. No live email, Gmail draft, deployment or account mutation is performed during installation.
+After signing in, complete the **Setup Interview** to configure the business, offer, research sources, outreach rules and optional connection details. Review your answers, save, then restart the application. The interview preserves existing data, creates a sending hold and does not activate integrations or sending. Each fresh installation receives its own tenant ID and local database; use a separate copy for each business. Keep `DRY_RUN=true`, `LIVE_SEND_ENABLED=false`, `CONTROLLED_AUTONOMY_ENABLED=false` and `OWNER_EMAIL_ENABLED=false` until separately authorized. Read access has its own switches and is off by default. No live email, Gmail draft, deployment or account mutation is performed during installation.
 
 ## Everyday workflow
 

@@ -1,4 +1,4 @@
-let csrf='',data=null;
+let csrf='',data=null,setupPrompted=false;
 const byId=id=>document.getElementById(id),esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={prospects:'Companies',drafts:'Drafts In Review',acceptedByProvider:'Provider Accepted',uncertain:'Uncertain Attempts',replies:'Replies',interests:'Interested Replies',bookings:'Confirmed Bookings',cost:'Recorded Cost',deliveryVerified:'Delivery Verified',revenueVerified:'Revenue Verified'};
 const workNames={mailbox_sync:'Replies And Delivery Notices',source_watch:'Source Monitoring',owner_alerts:'Owner Alerts',delivery:'Approved Outreach',bookings:'Meeting Verification',projection:'CRM Update',lifecycle:'Follow-up Planning',digest:'Approval Digest'};
@@ -14,6 +14,8 @@ function showView(id){for(const view of document.querySelectorAll('.view'))view.
 async function action(path,input,notice='Saved locally. Sending remains held.') {try{const result=await api(path,input);byId('error').textContent='';byId('notice').textContent=notice;await refresh();return result;}catch(error){report(error);}}
 async function refresh() {
   data=await api('state');byId('login').hidden=true;byId('workspace').hidden=false;
+  document.querySelector('[data-view="setup"]').hidden=!data.setupAvailable;
+  if(data.setupRequired&&!setupPrompted){setupPrompted=true;showView('setup');await loadSetup();}
   document.querySelector('.status').textContent=data.readiness.sendingEnabled?'Sending enabled':'Sending held';
   byId('metrics').innerHTML=Object.entries(data.metrics).map(([k,v])=>`<div class="metric"><small>${esc(labels[k]??k)}</small><strong>${esc(typeof v==='boolean'?(v?'Yes':'No'):k==='cost'?`$${v}`:v)}</strong></div>`).join('');
   if(data.discoveryProgress?.activeDay)byId('metrics').innerHTML+=`<div class="metric"><small>New sourced drafts today</small><strong>${esc(data.discoveryProgress.verifiedNewDrafts)} / ${esc(data.discoveryProgress.target)}</strong></div>`;
@@ -55,7 +57,7 @@ byId('cycle').onclick=()=>action('cycle',{},'Safe cycle completed. Review operat
 byId('hold').onclick=()=>action('hold',{},'All sending remains held.');
 document.addEventListener('click',event=>{
   const b=event.target.closest('button');if(!b)return;
-  if(b.dataset.view)showView(b.dataset.view);
+  if(b.dataset.view){showView(b.dataset.view);if(b.dataset.view==='setup')loadSetup().catch(report);}
   if(b.dataset.message){location.hash=`message=${encodeURIComponent(b.dataset.message)}`;detail(b.dataset.message);}
   if(b.dataset.new)editor(null,data.prospects.find(p=>p.id===b.dataset.new));
   if(b.dataset.source)action('source-refresh',{prospectId:b.dataset.source});

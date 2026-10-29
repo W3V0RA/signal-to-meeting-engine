@@ -1,13 +1,14 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Signal to Meeting — Business Console</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Signal to Meeting — Business Console</title><link rel="stylesheet" href="/app.css"><script src="/setup.js" defer></script><script src="/app.js" defer></script></head>
 <body>
 <header><div><p class="eyebrow">Business workspace</p><h1>Signal to Meeting</h1></div><span class="status">Sending held</span></header>
 <main>
 <section id="login"><h2>Open your business workspace</h2><p>Use the operator access key saved during local setup. The workspace opens with all external sending disabled.</p><form id="login-form"><label>Your reviewer name<input name="reviewer" autocomplete="name" required></label><label>Operator access key<input name="token" type="password" autocomplete="off" required></label><button>Sign In</button></form></section>
 <div id="workspace" hidden>
-<nav><button data-view="review">Message Review</button><button data-view="companies">Companies</button><button data-view="operations">Operations</button><button data-view="verification">Verification</button><button id="logout" class="secondary">Sign Out</button></nav>
+<nav><button data-view="setup">Setup Interview</button><button data-view="review">Message Review</button><button data-view="companies">Companies</button><button data-view="operations">Operations</button><button data-view="verification">Verification</button><button id="logout" class="secondary">Sign Out</button></nav>
 <p id="notice" role="status"></p><section id="metrics" class="metrics"></section>
+<section id="setup" class="view" hidden><h2>Setup interview</h2><p>Configure your business, outreach rules and optional connections. You can review everything before saving. Sending remains held.</p><div id="setup-interview"></div></section>
 <section id="review" class="view"><div class="section-title"><h2>Exact message review</h2><button id="example" class="secondary">Load Fictional Example</button></div><p>Review one recipient, subject and body at a time. Approval records your review; it cannot send a message or remove the installation hold.</p><div id="message-list"></div><div id="message-detail"></div><h3>Follow-up and response work</h3><div id="work-list"></div></section>
 <section id="companies" class="view" hidden><h2>Companies and source evidence</h2><p>Record a supported company fact, the researched person's role, and the exact published route separately. Pasted evidence remains unverified for live use until captured from the approved source.</p><div id="candidate-list"></div><div id="company-list"></div><details><summary>Add a researched company</summary><form id="company-form">
 <label>Company name<input name="company" required></label><label>Company website<input name="website" type="url" required placeholder="https://example.com"></label><label>Relevant offer<select name="offerId" id="offer-options"></select></label>

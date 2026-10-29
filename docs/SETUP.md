@@ -50,7 +50,15 @@ The console binds to loopback and requires a short-lived authenticated session a
 
 ## 2. Configure one business
 
-Edit `config/local.json` with a text editor: tenant ID; business name, sender/Reply-To/display name, website, signature and actual postal address; offerings; ICP/markets; approved source hosts/URLs; advisory weights; timezone/weekdays/window, first-touch and combined caps, spacing and up to three follow-up offsets; booking URL and integration IDs; owner email and digest time. Keep scores/headcount advisory. Use a fresh `ENGINE_DATABASE` path for a new tenant; another business's database is refused before migrations. Restart `npm start` after editing. Changes to configuration or evidence can invalidate existing exact-copy approvals and releases; inspect and reapprove as required.
+Select **Setup Interview** after signing in. A fresh installation opens it automatically. Answer the five screens:
+
+1. Enter the business name, website, sender identity, reply address, postal address and owner notification address.
+2. Describe the primary offer, target markets and sectors, and approved research URLs. Other existing offers are preserved.
+3. Choose the time zone, weekdays, sending window, separate initial and combined daily caps, pacing, follow-up offsets, opt-out wording and review rules. Approval remains required.
+4. Optionally enter your own Calendar, Notion, owned verification inbox and OAuth credentials. Blank credential fields preserve existing values. The interview stores them in your ignored local `.env`; it never displays previously stored credentials. Entering connection details does not enable access. The optional booking experiment requires your own canonical Google schedule, title and duration, with separate verification before release.
+5. Review the displayed answers and choose **Save Configuration And Keep Sending Held**. Stop the process with Ctrl+C and run `npm start` again. A changed configuration can invalidate prior approvals and verification; review them again as required. The interview never approves, sends, activates or clears the hold.
+
+Each fresh `npm run setup` generates a tenant ID. Use a separate copy and database for each business; another business's database is refused. Advanced settings not offered by the interview remain in `config/local.json` and `.env`. Existing shell environment values override `.env`, so remove conflicting shell variables before restarting. Keep scores/headcount advisory.
 
 The policy fields `dailyInitialCap`, `dailyMailboxCap` and `minimumSpacingMinutes` already control initial volume, combined volume, and shared spacing. Optionally set `minimumFirstTouchSpacingMinutes` separately; when omitted it falls back to `minimumSpacingMinutes`. For example, a business that has authorized ten total prospect messages per weekday, at least 30 minutes between initial messages and 15 minutes across all prospect messages can configure:
 
