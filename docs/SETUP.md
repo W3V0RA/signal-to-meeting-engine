@@ -13,7 +13,7 @@
 2. In the folder where you keep projects, clone the repository and enter it.
 
    ```sh
-   git clone https://github.com/hunterbell3122-lab/signal-to-meeting-engine.git
+   git clone https://github.com/W3V0RA/signal-to-meeting-engine.git
    cd signal-to-meeting-engine
    ```
 

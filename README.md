@@ -9,7 +9,7 @@ An open-source, locally operated business application for evidence-backed outrea
 Requirements: Git, Node.js 24+ (including npm), and an existing computer. No npm dependencies, database server, Docker, paid enrichment or model subscription is required.
 
 ```sh
-git clone https://github.com/hunterbell3122-lab/signal-to-meeting-engine.git
+git clone https://github.com/W3V0RA/signal-to-meeting-engine.git
 cd signal-to-meeting-engine
 npm run setup
 npm start
