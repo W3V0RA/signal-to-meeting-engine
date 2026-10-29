@@ -11,13 +11,16 @@ export function prepareNotification(engine,{id,kind,subject,body}) {
   return engine.store.db.prepare('SELECT * FROM notifications WHERE id=?').get(id);
 }
 
-export function approvalDigest(engine,day) {
-  const messages=engine.store.list('message').filter(m=>m.state==='review'&&!engine.store.get('approval',m.id));
+export function approvalDigest(engine,day,{notionView=null}={}) {
+  const pending=engine.store.list('message').filter(m=>m.state==='review');
+  const messages=pending.filter(m=>m.kind!=='followup'&&engine.store.get('approval',m.id)?.digest!==engine.context(m.id).digest);
+  const followups=pending.filter(m=>m.kind==='followup');
   const items=messages.map(m=>{
     const p=engine.store.get('prospect',m.prospectId);
     return `${p.companyName} — ${m.kind}\nRecipient: ${m.recipient}\nSubject: ${m.subject}\nReview: ${engine.config.operations?.consoleUrl??'http://127.0.0.1:3401'}/#message=${encodeURIComponent(m.id)}`;
   });
-  const body=`${engine.config.business.name} approval digest\n${day}\n\n${messages.length} exact messages await individual review.\n\n${items.join('\n\n')||'No pending message approvals.'}\n\nOpening a review link does not approve or send any message. Sending remains subject to every verification and suppression gate.`;
+  const viewLine=notionView?`Saved Notion view: ${notionView.total} rows. This is a separate view count, not the local approval count.\n`:'';
+  const body=`${engine.config.business.name} approval digest\n${day}\n\n${viewLine}${messages.length} exact message${messages.length===1?'':'s'} await individual review in the local engine.\n${followups.length} follow-up${followups.length===1?'':'s'} in review; separate source, release, order and cancellation checks apply.\n\n${items.join('\n\n')||'No pending message approvals.'}\n\nReview status does not establish send eligibility. Opening a review link does not approve or send any message. Sending remains subject to every verification and suppression gate.`;
   return prepareNotification(engine,{id:`digest:${day}`,kind:'digest',subject:`Message Review For ${day}`,body});
 }
 
@@ -33,9 +36,11 @@ export function ownerAlerts(engine) {
   return prepared;
 }
 
-export function mailboxAdmission(engine,now) {
+export function mailboxAdmission(engine,now,{ownerNotification=false}={}) {
+  const includeOwner=engine.config.policy.includeOwnerNotificationsInMailboxCap!==false;
+  if(ownerNotification&&!includeOwner)return [];
   const attempts=engine.store.db.prepare('SELECT at,local_day FROM attempts').all();
-  const notifications=engine.store.db.prepare('SELECT attempted_at FROM notifications WHERE attempted_at IS NOT NULL').all();
+  const notifications=includeOwner?engine.store.db.prepare('SELECT attempted_at FROM notifications WHERE attempted_at IS NOT NULL').all():[];
   const times=[...attempts.map(a=>({at:a.at,day:a.local_day})),...notifications.map(n=>({at:n.attempted_at,day:localParts(new Date(n.attempted_at),engine.config.policy).day}))];
   const day=localParts(now,engine.config.policy).day,gaps=[];
   if(times.filter(t=>t.day===day).length>=engine.config.policy.dailyMailboxCap)gaps.push('Daily mailbox cap');
@@ -59,7 +64,7 @@ export async function deliverOwnerNotification(engine,id,{enabled=false,simulate
   const message={id,subject:notification.subject,body:notification.body,recipient:notification.recipient,from:engine.config.business.sender,replyTo:engine.config.business.replyTo,displayName:engine.config.business.displayName};
   const prepared=engine.mail.prepare?.(message);
   engine.store.transaction(()=>{
-    const gaps=mailboxAdmission(engine,now);if(gaps.length)throw Error(gaps.join('; '));
+    const gaps=mailboxAdmission(engine,now,{ownerNotification:true});if(gaps.length)throw Error(gaps.join('; '));
     const current=engine.store.db.prepare('SELECT * FROM notifications WHERE id=?').get(id);
     if(current.state!=='pending'||current.attempted_at||hash(current)!==hash(notification))throw Error('Notification changed or concurrently reserved');
     engine.store.db.prepare("UPDATE notifications SET state='reserved',attempted_at=? WHERE id=?").run(now.toISOString(),id);

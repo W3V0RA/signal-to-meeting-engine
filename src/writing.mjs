@@ -1,7 +1,7 @@
 import { hash } from './config.mjs';
 export function bodyFor(message,prospect,config) {
   const name=prospect.contact?.name?.trim().split(/\s+/)[0];
-  const greeting=name?`Hi ${name},`:'Hello,';
+  const greeting=prospect.contact?.routeType==='shared'&&config.policy.sharedInboxGreeting==='neutral'?'Hi there,':name?`Hi ${name},`:'Hello,';
   const main=message.sections.map(s=>s.text).join('\n\n');
   return `${greeting}\n\n${main}\n\n${config.business.signature}\n\n${config.policy.optOut}`;
 }

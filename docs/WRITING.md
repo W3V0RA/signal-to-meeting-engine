@@ -6,7 +6,7 @@ Before authoring, write a three-part brief: the verified observation, the plausi
 
 Open with a concrete possible payoff, then connect it promptly to the supported company fact. Express inferred needs as questions or possibilities. Keep human review of dates, commitments and proposed changes explicit where relevant. Do not invent urgency, savings, customer results, a personal connection or an already-built sample.
 
-Use the verified person's first name, even when routing through an independently verified shared or official free-mail business inbox. This salutation is not a claim that they personally own the address. When a name is missing, drafts can use `Hello,` but release retains the named-contact research gap.
+The default greeting uses the verified person's first name, including through an independently verified shared or official free-mail business inbox. A business can opt into `sharedInboxGreeting: "neutral"` for routes explicitly classified as shared; those drafts use `Hi there,`. Neither greeting claims a shared address is personally owned. When a name is missing, drafts can use `Hello,` but release retains the named-contact research gap. A configuration change can invalidate an existing exact-copy approval or release and does not rewrite stored messages.
 
 Default first-touch copy uses 50–80 words excluding greeting/signature/opt-out, short paragraphs, plain text and one final soft question. Subjects use 3–7 words, 36–50 characters, neutral Title Case and no punctuation, numbers, person-name tags or deceptive thread prefixes. These ranges are configurable. Keep the accurate identity, website, postal address and opt-out separate from word count.
 

@@ -118,6 +118,9 @@ export class Engine {
     if(m.kind==='initial'&&todays.filter(a=>a.kind==='initial').length>=this.config.policy.dailyInitialCap)gaps.push('Daily initial cap');
     const latest=attempts.sort((a,b)=>Date.parse(b.at)-Date.parse(a.at))[0];
     if(latest&&now.getTime()-Date.parse(latest.at)<this.config.policy.minimumSpacingMinutes*60000)gaps.push('Minimum spacing');
+    const latestInitial=attempts.find(a=>a.kind==='initial');
+    const firstTouchSpacing=this.config.policy.minimumFirstTouchSpacingMinutes??this.config.policy.minimumSpacingMinutes;
+    if(m.kind==='initial'&&latestInitial&&now.getTime()-Date.parse(latestInitial.at)<firstTouchSpacing*60000)gaps.push('Minimum first-touch spacing');
     gaps.push(...mailboxAdmission(this,now));
     return [...new Set(gaps)];
   }

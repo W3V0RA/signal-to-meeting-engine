@@ -4,16 +4,18 @@ A private, generic business application for evidence-backed outreach, individual
 
 **Ready to install in send-disabled mode. Each business's live integration verification remains pending until genuine evidence is supplied.** Environment flags alone cannot activate sending. The installation also requires fresh authenticated sender/integration verification and separate human activation. Neither setup, the console nor the verification commands enable sending.
 
-## Install and open
+## Install and open locally
 
-Requirements: Node.js 24+ and an existing computer. No npm dependencies, database server, Docker, paid enrichment or model subscription is required.
+Requirements: Git, Node.js 24+ (including npm), and an existing computer. No npm dependencies, database server, Docker, paid enrichment or model subscription is required. The repository is currently private; cloning requires access.
 
 ```sh
+git clone https://github.com/hunterbell3122-lab/signal-to-meeting-engine.git
+cd signal-to-meeting-engine
 npm run setup
 npm start
 ```
 
-Open `http://127.0.0.1:3401`. Sign in with the `admin` value in your private, ignored `runtime/keys.json` file. Setup creates configuration, separate random operator credentials and a local SQLite database without overwriting existing files. Keep credentials private.
+Open `http://127.0.0.1:3401`. Sign in with the `admin` value in your private, ignored `runtime/keys.json` file. Setup creates configuration, separate random operator credentials and a local SQLite database without overwriting existing files. Keep credentials private. For platform-specific steps, checks, configuration, and troubleshooting, follow the [local installation guide](docs/SETUP.md).
 
 Copy/customize `config/local.json` for the business before importing real data. Use a new tenant ID and database path for each business. Keep `DRY_RUN=true`, `LIVE_SEND_ENABLED=false`, `CONTROLLED_AUTONOMY_ENABLED=false` and `OWNER_EMAIL_ENABLED=false`. Read access has its own switches and is off by default. No live email, Gmail draft, deployment or account mutation is performed during installation.
 
@@ -42,7 +44,7 @@ npm run check
 npm run demo
 ```
 
-The separate fictional demo always uses mocks and can be viewed with `npm run dashboard` on port 3400. Integration verification and reconciliation commands are described in the setup/operations guides. CI is manually triggered and requires no deployment credentials.
+The separate fictional demo always uses mocks and can be viewed with `npm run dashboard` on port 3400. Integration verification and reconciliation commands are described in the setup/operations guides. An optional digest reads the actual configured Notion saved view and reports it separately from local approval counts; an incomplete query fails closed. CI is manually triggered and requires no deployment credentials.
 
 ## Guides
 

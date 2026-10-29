@@ -1,5 +1,11 @@
 # Release history
 
+## Unreleased — configurable controls and local onboarding
+
+Adds optional distinct first-touch spacing, an explicitly configurable owner-notification budget boundary, neutral shared-inbox greetings, and a digest that can read an actual configured Notion saved view without substituting an approximate count. Local exact-copy approval counts and the separate view count are not send-eligibility claims. Existing configurations retain their previous behavior when the new options are omitted. Local installation steps now cover prerequisites, cloning, setup, sign-in, offline tests and troubleshooting.
+
+This generic installation is not the hosted private deployment: the newer initial/final-follow-up booking-link experiment and provider-specific scheduled sender-renewal workflow have not been ported. The generic implementation continues to permit the configured booking URL only in a separately approved response to verified interest. No real recipient, business credentials, production history or proof was migrated. Offline tests do not establish live delivery or funding outcomes.
+
 ## Version 0.2 — Send-disabled business installation
 
 The operator console, scheduler, owner outbox, broader inbound parser, evidence collector, independent installation hold, migrations, backup and exact Sent reconciliation are now implemented. See [implementation acceptance](IMPLEMENTATION_ACCEPTANCE.md) for 189 passing tests, six evaluations and fresh-install/restore verification. Business-specific live proof remains pending and no sending was enabled.

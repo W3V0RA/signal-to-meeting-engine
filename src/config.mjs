@@ -16,6 +16,10 @@ export function validateConfig(c) {
   new Intl.DateTimeFormat('en-US',{timeZone:c.policy.timezone});
   const p=c.policy;
   for(const k of ['dailyInitialCap','dailyMailboxCap','minimumSpacingMinutes','releaseMinutes','inboundFreshMinutes']) if(!Number.isInteger(p[k]) || p[k]<1) throw Error(`Invalid policy ${k}`);
+  if(p.minimumFirstTouchSpacingMinutes!==undefined&&(!Number.isInteger(p.minimumFirstTouchSpacingMinutes)||p.minimumFirstTouchSpacingMinutes<1))throw Error('Invalid first-touch spacing policy');
+  if(p.includeOwnerNotificationsInMailboxCap!==undefined&&typeof p.includeOwnerNotificationsInMailboxCap!=='boolean')throw Error('Invalid owner notification capacity policy');
+  if(p.sharedInboxGreeting!==undefined&&!['named','neutral'].includes(p.sharedInboxGreeting))throw Error('Invalid shared inbox greeting policy');
+  if(c.operations?.notionApprovalViewId!==undefined&&(typeof c.operations.notionApprovalViewId!=='string'||!c.operations.notionApprovalViewId.trim()))throw Error('Invalid Notion saved view ID');
   if(p.releaseMinutes>60 || !p.weekdays.length || p.weekdays.some(d=>!Number.isInteger(d)||d<0||d>6)) throw Error('Invalid release or weekday policy');
   if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(p.windowStart)||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(p.windowEnd)||p.windowStart>=p.windowEnd) throw Error('Invalid pacing window');
   if(!Number.isFinite(c.discovery.maxSourceAgeHours)||c.discovery.maxSourceAgeHours<=0||!Array.isArray(c.discovery.allowedHosts))throw Error('Invalid discovery policy');
