@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { createHash, timingSafeEqual } from 'node:crypto';
+import { validateBookingPolicy } from './booking.mjs';
 
 export const hash = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
 export const email = value => typeof value === 'string' && /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(value) && !/[\r\n]/.test(value);
@@ -19,14 +20,23 @@ export function validateConfig(c) {
   if(p.minimumFirstTouchSpacingMinutes!==undefined&&(!Number.isInteger(p.minimumFirstTouchSpacingMinutes)||p.minimumFirstTouchSpacingMinutes<1))throw Error('Invalid first-touch spacing policy');
   if(p.includeOwnerNotificationsInMailboxCap!==undefined&&typeof p.includeOwnerNotificationsInMailboxCap!=='boolean')throw Error('Invalid owner notification capacity policy');
   if(p.sharedInboxGreeting!==undefined&&!['named','neutral'].includes(p.sharedInboxGreeting))throw Error('Invalid shared inbox greeting policy');
+  if(p.requirePreApprovalRelease!==undefined&&typeof p.requirePreApprovalRelease!=='boolean')throw Error('Invalid pre-approval release policy');
+  if(p.requireAuthoringBrief!==undefined&&typeof p.requireAuthoringBrief!=='boolean')throw Error('Invalid authoring brief policy');
+  if(p.minimumPortfolioComparisons!==undefined&&(!Number.isInteger(p.minimumPortfolioComparisons)||p.minimumPortfolioComparisons<0||p.minimumPortfolioComparisons>10))throw Error('Invalid portfolio comparison minimum');
+  if(p.dailyDiscoveryTarget!==undefined&&(!Number.isInteger(p.dailyDiscoveryTarget)||p.dailyDiscoveryTarget<1))throw Error('Invalid daily discovery target');
+  if(p.senderProofHours!==undefined&&(!Number.isInteger(p.senderProofHours)||p.senderProofHours<1||p.senderProofHours>24))throw Error('Invalid sender proof lifetime');
+  if(p.writing.subjectCase!==undefined&&!['title','sentence'].includes(p.writing.subjectCase))throw Error('Invalid subject case policy');
   if(c.operations?.notionApprovalViewId!==undefined&&(typeof c.operations.notionApprovalViewId!=='string'||!c.operations.notionApprovalViewId.trim()))throw Error('Invalid Notion saved view ID');
+  if(c.operations?.projectCommunicationWork!==undefined&&typeof c.operations.projectCommunicationWork!=='boolean')throw Error('Invalid communication projection policy');
   if(p.releaseMinutes>60 || !p.weekdays.length || p.weekdays.some(d=>!Number.isInteger(d)||d<0||d>6)) throw Error('Invalid release or weekday policy');
   if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(p.windowStart)||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(p.windowEnd)||p.windowStart>=p.windowEnd) throw Error('Invalid pacing window');
   if(!Number.isFinite(c.discovery.maxSourceAgeHours)||c.discovery.maxSourceAgeHours<=0||!Array.isArray(c.discovery.allowedHosts))throw Error('Invalid discovery policy');
   const weights=c.prioritization.weights;
   if(!weights||Object.values(weights).some(v=>!Number.isFinite(v)||v<0)||Math.abs(weights.relevance+weights.recency-1)>0.001)throw Error('Invalid advisory weights');
   if(!Array.isArray(p.followupDays)||p.followupDays.length>3||p.followupDays.some((d,i)=>!Number.isInteger(d)||d<1||(i&&d<=p.followupDays[i-1]))) throw Error('Invalid cadence');
+  if(p.followupMinGapDays!==undefined&&(!Array.isArray(p.followupMinGapDays)||p.followupMinGapDays.length!==p.followupDays.length||p.followupMinGapDays.some((d,i)=>!Number.isInteger(d)||d<0||(i===0&&d!==0))))throw Error('Invalid follow-up minimum gaps');
   if(!p.optOut.toLowerCase().includes('reply unsubscribe') || !c.offers.length) throw Error('Offers and reply opt-out required');
+  validateBookingPolicy(c);
   return c;
 }
 export function loadConfig(path='config/example.json',env=process.env) {

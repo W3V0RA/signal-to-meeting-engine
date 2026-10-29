@@ -34,5 +34,19 @@ export async function syncNotion(engine,provider) {
     engine.store.db.prepare('INSERT INTO projections VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET provider_id=excluded.provider_id,hash=excluded.hash').run(p.id,result.id,digest);
     engine.store.audit('notion_projection',p.id,engine.clock(),{mode:provider.mode});written++;
   }
+  if(engine.config.operations?.projectCommunicationWork){
+    for(const work of engine.store.list('work').filter(w=>['followup','response'].includes(w.kind))){
+      const p=engine.store.get('prospect',work.prospectId);if(!p)throw Error('Communication projection prospect missing');
+      const id=`communication:${hash(work.id)}`,message=work.messageId?engine.store.get('message',work.messageId):null;
+      const stopped=work.state==='cancelled'||message?.state==='cancelled';
+      const data={company:`${p.companyName} — ${work.kind}${work.ordinal?` ${work.ordinal}`:''}`,state:stopped?'cancelled':message?.state??work.state,
+        nextAction:stopped?'Do not contact; preserve cancellation':work.kind==='response'?'Read actual inbound and review the separately approved response in the local console':'Review the personalized follow-up in the local console; initial authorization and all send checks still apply'};
+      const digest=hash(data),prior=engine.store.db.prepare('SELECT * FROM projections WHERE id=?').get(id);
+      if(prior?.hash===digest)continue;
+      const result=await provider.upsert(id,data,prior?.provider_id);
+      engine.store.db.prepare('INSERT INTO projections VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET provider_id=excluded.provider_id,hash=excluded.hash').run(id,result.id,digest);
+      engine.store.audit('notion_communication_projected',work.id,engine.clock(),{mode:provider.mode});written++;
+    }
+  }
   return {status:provider.mode==='mock'?'simulated':'synced',written};
 }

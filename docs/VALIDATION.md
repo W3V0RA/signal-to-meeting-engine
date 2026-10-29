@@ -12,6 +12,7 @@ Coverage includes the original evidence/contact, advisory size/score, exact appr
 | Worker | Default no-provider cycle, durable schedules, lease exclusivity/recovery, backoff/hold, cursor safety and digest idempotency |
 | Notifications | Owner-only preview/mock transport, duplicate/uncertain holds, configurable owner accounting and conservative prospect caps |
 | Saved view and pacing | Actual saved-view pagination, incomplete-query refusal, distinct local review counts, and separate first-touch and shared spacing boundaries |
+| Current-style workflow | Unapproved baselines before human approval, preserved private review history, Google booking identity and duration review, ordered follow-up gaps and a conservative daily progress counter |
 | Inbound | HTML/quoted context, exact aliases, unknown participant, attachment limits and cross-thread structured DSN correlation |
 | Verifier | Six mirrored actual-style artifact contracts, identity/route/copy/authentication/TLS/age refusal cases, signed integration binding |
 | Recovery | Original reserved Message-ID/context, exact Sent readback, no-match/multiple/mismatch holds and no resend |

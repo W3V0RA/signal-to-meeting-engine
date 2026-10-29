@@ -1,0 +1,20 @@
+{
+  "dailyInitialCap": 10,
+  "dailyMailboxCap": 10,
+  "minimumSpacingMinutes": 15,
+  "minimumFirstTouchSpacingMinutes": 30,
+  "includeOwnerNotificationsInMailboxCap": false,
+  "sharedInboxGreeting": "neutral",
+  "requirePreApprovalRelease": true,
+  "requireAuthoringBrief": true,
+  "minimumPortfolioComparisons": 10,
+  "dailyDiscoveryTarget": 5,
+  "senderProofHours": 24,
+  "followupMinGapDays": [0, 3, 11],
+  "writing": {
+    "subjectWords": [3, 6],
+    "subjectCharacters": [1, 120],
+    "subjectCase": "sentence",
+    "firstTouchWords": [60, 100]
+  }
+}

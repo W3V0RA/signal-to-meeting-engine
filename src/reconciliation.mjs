@@ -18,8 +18,9 @@ export async function reconcileAttempt(engine,id,{mail,token,reviewer,simulation
     const current=engine.store.db.prepare('SELECT status FROM attempts WHERE message_id=?').get(id);
     if(!['uncertain','reserved'].includes(current.status))throw Error('Attempt changed during reconciliation');
     engine.store.db.prepare("UPDATE attempts SET status='sent',provider_id=?,thread_id=? WHERE message_id=?").run(message.id,message.threadId,id);
-    const stored=engine.store.get('message',id);engine.store.put('message',id,{...stored,state:'sent'});
-    if(record.m.kind==='initial')engine.store.put('sequence',id,{stopped:false,sentAt:attempt.at,initialDigest:record.digest,configHash:record.configHash});
+    const sentTime=Number(message.internalDate),sentAt=Number.isFinite(sentTime)&&sentTime>0&&sentTime<=engine.clock().getTime()?new Date(sentTime).toISOString():null;
+    const stored=engine.store.get('message',id);engine.store.put('message',id,{...stored,state:'sent',...(sentAt?{sentAt}:{})});
+    if(record.m.kind==='initial')engine.store.put('sequence',id,{stopped:false,sentAt:sentAt??attempt.at,initialDigest:record.digest,configHash:record.configHash});
     engine.store.audit('provider_acceptance_reconciled',id,engine.clock(),{reviewer,providerId:message.id,simulation});
     engine.store.holdSending('Reconciled provider acceptance; review inbound and verification before activation',engine.clock());
   });

@@ -1,0 +1,12 @@
+{
+  "integrations": {"bookingUrl": "https://calendar.app.google/fictional"},
+  "policy": {
+    "booking": {
+      "strategy": "initial-and-final",
+      "canonicalScheduleUrl": "https://calendar.google.com/calendar/u/0/appointments/schedules/fictional",
+      "scheduleTitle": "Example AI Fit Call",
+      "durationMinutes": 30,
+      "appointmentLabel": "AI Fit Call"
+    }
+  }
+}

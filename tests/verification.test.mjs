@@ -7,8 +7,8 @@ import { seal,unseal } from '../src/security.mjs';
 import { hash } from '../src/config.mjs';
 import { snapshot } from '../src/evidence.mjs';
 
-function mailboxFixture() {
-  const f=fixture({configEdit:c=>{c.verification={ownedInbox:'owned@example.org'};}}),at=f.now().getTime()-10*60000;
+function mailboxFixture({proofHours}={}) {
+  const f=fixture({configEdit:c=>{c.verification={ownedInbox:'owned@example.org'};if(proofHours)c.policy.senderProofHours=proofHours;}}),at=f.now().getTime()-10*60000;
   const h=(from,to,id,extra=[])=>[{name:'From',value:from},{name:'To',value:to},{name:'Subject',value:'Controlled Verification Example'},{name:'Message-ID',value:id},...extra];
   const part=(text,headers)=>({mimeType:'text/plain',headers,body:{data:Buffer.from(text).toString('base64url')}});
   const base=(id,threadId,payload,labelIds=[])=>({id,threadId,payload,labelIds,internalDate:String(at)});
@@ -44,6 +44,12 @@ for(const [name,mutate]of [
 ])test(`real-evidence collector refuses ${name}`,async()=>{const f=mailboxFixture();mutate(f);await assert.rejects(f.collect());assert.equal(f.store.get('installation','preflight'),null);assert.equal(f.mail.sent.length,0);f.store.close();});
 test('simulated mailbox captures cannot be promoted to production proof',async()=>{const f=mailboxFixture();await assert.rejects(f.collect({simulation:false}),/real owned Gmail/);assert.equal(f.store.get('installation','preflight'),null);f.store.close();});
 test('collector requires authenticated human verifier',async()=>{const f=mailboxFixture();await assert.rejects(f.collect({token:'wrong'}),/Authentication/);await assert.rejects(f.collect({reviewer:''}),/Human verifier/);f.store.close();});
+test('configured 24-hour sender proof expires from actual artifacts and never extends old evidence',async()=>{
+  const f=mailboxFixture({proofHours:24}),old=f.now().getTime()-23*3600000;
+  for(const message of Object.values(f.messages))message.internalDate=String(old);
+  const artifact=await f.collect();assert.equal(Date.parse(artifact.expiresAt),old+24*3600000);
+  assert.equal(Date.parse(unseal(f.store.get('installation','preflight').envelope,f.keys.preflight).expiresAt),old+24*3600000);f.store.close();
+});
 test('DKIM identity domain in actual receiver header is supported without inventing header d',async()=>{const f=mailboxFixture();const auth=f.messages.received.payload.headers.find(h=>h.name==='Authentication-Results');auth.value=auth.value.replace('header.d=example.org','header.i=@example.org');assert.equal((await f.collect()).mode,'simulation');f.store.close();});
 test('a lower spoofed TLS header cannot override the first receiving gateway observation',async()=>{const f=mailboxFixture();f.messages.received.payload.headers.find(h=>h.name==='Received').value='from mail.example.org by mx.google.com with ESMTP id example;';f.messages.received.payload.headers.push({name:'Received',value:'by mx.google.com with ESMTPS id lower-header'});await assert.rejects(f.collect(),/TLS/);f.store.close();});
 test('integration verification seals business-specific reads and rejects simulation for live readiness',async()=>{

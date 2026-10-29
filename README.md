@@ -32,7 +32,7 @@ The running application executes durable scheduled jobs for mailbox/DSN reads, s
 
 ## Safety and capability
 
-Scores and headcount remain advisory. Exact source/contact association, honest claims, current permission/suppression/history, human approval, signed purpose/thread/touch-bound releases, mailbox identity, expiry, caps, local windows and pacing remain required. Replies, bounces and opt-outs cancel sequences. Responses need fresh exact-copy approval; booking links require explicit verified interest. Provider acceptance, simulations and link clicks do not prove delivery, meetings or revenue.
+Scores and headcount remain advisory. Exact source/contact association, honest claims, current permission/suppression/history, human approval, signed purpose/thread/touch-bound releases, mailbox identity, expiry, caps, local windows and pacing remain required. Replies, bounces and opt-outs cancel sequences. Responses need fresh exact-copy approval. An optional experiment allows a verified Google booking link in initials and third follow-ups; middle follow-ups stay link-free and responses still require verified interest. Provider acceptance, simulations and link clicks do not prove delivery, meetings or revenue.
 
 Gmail, Calendar, Notion and public-source adapters are included. The mailbox verifier reads six existing, selected owned-inbox artifacts, checks receiving authentication/TLS, exact delivered copy, mirrored replies and unsubscribe, and records local suppression enforcement. It sends nothing and cannot create proof from simulation. Each business must provide its own accounts and actual artifacts; this repository contains none.
 
@@ -49,10 +49,11 @@ The separate fictional demo always uses mocks and can be viewed with `npm run da
 ## Guides
 
 - [Business installation walkthrough](docs/SETUP.md) and [readiness checklist](docs/BUSINESS_READINESS.md)
+- [What this repository implements and what remains separate](docs/CURRENT_IMPLEMENTATION.md)
 - [Capabilities and verification limits](docs/CAPABILITIES.md), [architecture](docs/ARCHITECTURE.md), [build specification](BUILD.md)
 - [Security and approval](SECURITY.md), [writing](docs/WRITING.md), [operations/recovery](docs/OPERATIONS.md)
 - [Customization/migration](docs/CUSTOMIZATION.md), [schema](schema/README.md), [validation](docs/VALIDATION.md)
 - [Gmail](docs/integrations/GMAIL.md), [Calendar](docs/integrations/CALENDAR.md), [Notion](docs/integrations/NOTION.md), [research](docs/integrations/RESEARCH.md)
 - [Provenance and reuse status](LICENSE_STATUS.md)
 
-This is a single-business local deployment, not a hosted multi-tenant CRM. It does not promise unrestricted semantic claim verification, web-wide discovery, autonomous prose authoring or commercial results. Source and message authoring remain explicitly reviewed. No original production data/history or third-party source text is included, and no open-source redistribution license has been invented.
+This is a single-business local deployment, not a hosted multi-tenant CRM. It does not promise unrestricted semantic claim verification, web-wide discovery, autonomous prose authoring or commercial results. Source and message authoring remain explicitly reviewed. The private hosted implementation's recurring controlled-test sender renewal and automated daily discovery are not included; the local verifier reads existing owned-inbox artifacts without sending. No original production data/history or third-party source text is included, and no open-source redistribution license has been selected.

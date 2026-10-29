@@ -5,7 +5,8 @@ import { approvalDigest,deliverOwnerNotification } from '../src/notifications.mj
 import { validateConfig } from '../src/config.mjs';
 import { Notion } from '../src/providers/notion.mjs';
 import { Worker } from '../src/worker.mjs';
-import { bodyFor } from '../src/writing.mjs';
+import { bodyFor,writingGaps } from '../src/writing.mjs';
+import { readFileSync } from 'node:fs';
 
 function attempt(f,id,kind,at,status='sent') {
   f.store.db.prepare('INSERT INTO attempts(message_id,recipient,kind,local_day,at,status) VALUES(?,?,?,?,?,?)')
@@ -56,11 +57,24 @@ test('new pacing policy rejects malformed optional values',()=>{
   const c=structuredClone(f.config);c.policy.includeOwnerNotificationsInMailboxCap='false';assert.throws(()=>validateConfig(c),/owner/i);f.store.close();
 });
 
+test('the recent-policy example merges into the complete configuration and validates',()=>{
+  const f=fixture(),profile=JSON.parse(readFileSync('config/recent-policy.example.json','utf8'));
+  const config=structuredClone(f.config);Object.assign(config.policy,profile);
+  assert.equal(validateConfig(config).policy.dailyDiscoveryTarget,5);assert.equal(config.policy.dailyMailboxCap,10);
+  assert.equal(config.policy.minimumFirstTouchSpacingMinutes,30);assert.equal(config.policy.requirePreApprovalRelease,true);f.store.close();
+});
+
 test('neutral shared inbox greeting is optional and never changes direct routes',()=>{
   const f=fixture(),m=f.s.draft,p=f.s.prospect;
   assert.match(bodyFor(m,p,f.config),/^Hi Morgan,/);
   f.config.policy.sharedInboxGreeting='neutral';assert.match(bodyFor(m,p,f.config),/^Hi there,/);
   p.contact.routeType='personal';assert.match(bodyFor(m,p,f.config),/^Hi Morgan,/);f.store.close();
+});
+
+test('sentence-case subject format can be configured without changing the legacy default',()=>{
+  const f=fixture(),m=f.store.get('message',f.s.draft.id);m.subject='Reviewing customer job status for updates';
+  assert.ok(writingGaps(m,f.s.prospect,f.config).includes('Subject format'));
+  f.config.policy.writing.subjectCase='sentence';assert.ok(!writingGaps(m,f.s.prospect,f.config).includes('Subject format'));f.store.close();
 });
 
 test('Notion saved-view query follows pages and uses the saved view API',async()=>{

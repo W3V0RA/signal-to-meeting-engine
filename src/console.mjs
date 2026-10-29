@@ -6,11 +6,12 @@ import { dashboard,learning } from './reporting.mjs';
 import { refreshProspectSources } from './discovery.mjs';
 import { scenario } from '../fixtures/scenario.mjs';
 import { snapshot } from './evidence.mjs';
+import { dailyDiscoveryProgress } from './daily-discovery.mjs';
 
 function requireVersion(engine,id,digest) {if(typeof digest!=='string'||engine.context(id).digest!==digest)throw Error('Draft changed; reload its current exact copy before reviewing or editing');}
 function state(application) {
   const {engine}=application,store=engine.store;
-  return {business:engine.config.business,timezone:engine.config.policy.timezone,offers:engine.config.offers,readiness:readiness(engine),metrics:dashboard(store),learning:learning(store),
+  return {business:engine.config.business,timezone:engine.config.policy.timezone,offers:engine.config.offers,preApprovalRequired:engine.config.policy.requirePreApprovalRelease===true,authoringBriefRequired:engine.config.policy.requireAuthoringBrief===true,bookingStrategy:engine.config.policy.booking?.strategy??'interest-only',bookingDurationMinutes:engine.config.policy.booking?.durationMinutes??null,discoveryProgress:dailyDiscoveryProgress(engine),readiness:readiness(engine),metrics:dashboard(store),learning:learning(store),
     candidates:store.list('discoveryCandidate'),prospects:store.list('prospect'),messages:store.list('message').map(m=>{
       const ctx=engine.context(m.id);let gaps;
       try{gaps=engine.baseGaps(m.id,engine.clock(),true);}catch{gaps=['Research or message structure needs repair'];}
@@ -87,7 +88,7 @@ export function createConsole(application,{port=3401,clock=()=>Date.now()}={}) {
       }
       if(url.pathname==='/api/release') {
         requireVersion(e,input.id,input.digest);const proof=e.store.get('installation','preflight');
-        return send(res,200,e.release(input.id,{token:e.keys.admin,preflight:proof?.envelope,production:true}));
+        return send(res,200,e.release(input.id,{token:e.keys.admin,preflight:proof?.envelope,production:true,preApproval:input.preApproval===true}));
       }
       if(url.pathname==='/api/consent') {
         if(!email(input.email)||input.allowed!==true||!input.basis?.trim()||!Number.isFinite(Date.parse(input.expiresAt))||Date.parse(input.expiresAt)<=e.clock().getTime())throw Error('Reviewed route, basis and future expiry are required');

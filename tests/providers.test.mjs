@@ -79,6 +79,13 @@ test('Notion projection queries stable ID before create and only changes system 
   assert.equal(result.id,'existing');assert.ok(calls[0].url.includes('/data_sources/'));assert.equal(calls[1].options.method,'PATCH');assert.ok(!JSON.parse(calls[1].options.body).properties.Approved);
 });
 test('live Notion sync returns before writes with defaults',async()=>{const f=fixture();const provider={mode:'notion',upsert:()=>{throw Error('forbidden');}};assert.equal((await syncNotion(f.engine,provider)).written,0);f.store.close();});
+test('communication projections are stable separate rows and preserve the parent projection',async()=>{
+  const f=fixture({configEdit:c=>{c.operations.projectCommunicationWork=true;}}),notion={mode:'mock',pages:new Map(),async upsert(id,data){this.pages.set(id,structuredClone(data));return {id:`mock:${id}`};}};
+  f.ready();await f.simulate();await syncNotion(f.engine,notion);const originalId=f.s.prospect.id,original=structuredClone(notion.pages.get(originalId));
+  f.engine.planFollowups(f.s.draft.id);assert.equal((await syncNotion(f.engine,notion)).written,3);assert.deepEqual(notion.pages.get(originalId),original);
+  assert.equal(notion.pages.size,4);assert.equal((await syncNotion(f.engine,notion)).written,0);
+  const prior=[...notion.pages.keys()].filter(k=>k!==originalId);assert.equal(new Set(prior).size,3);assert.ok(prior.every(k=>k.startsWith('communication:')));f.store.close();
+});
 test('calendar adapter reads a specified event and maps acceptance without creating events',async()=>{
   let method;const calendar=new GoogleCalendar({gmail:{token:async()=> 'mock'},calendarId:'mock-calendar',fetcher:async(url,options)=>{method=options.method;return {ok:true,json:async()=>({id:'event',status:'confirmed',organizer:{email:'alex@example.org'},start:{dateTime:'2026-10-15T15:00:00Z'},end:{dateTime:'2026-10-15T15:30:00Z'},attendees:[{email:'office@example.com',responseStatus:'accepted'}]})};}});
   assert.equal((await calendar.event('event')).attendees[0].accepted,true);assert.equal(method,undefined);

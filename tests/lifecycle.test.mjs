@@ -65,6 +65,16 @@ test('personalized follow-up uses initial authorization but new purpose-bound re
   const draft=f.engine.draft({...work,id:work.id,subject:'A Small Customer Update Review',sections:[{type:'possibility',text:'One reviewed handoff could show which dates are ready to share.'},{type:'fact',claimId:'schedule',text:f.s.prospect.claims[0].text},{type:'question',text:'Would reviewing that specific handoff be useful?'}]});
   f.release(draft.id);assert.equal((await f.simulate(draft.id)).status,'simulated');assert.equal(f.mail.sent[1].threadId,f.mail.sent[0].threadId);assert.equal(f.engine.planFollowups(f.s.draft.id)[0].state,'completed');f.store.close();
 });
+
+test('late prior follow-up shifts the next touch and enforces its minimum gap',async()=>{
+  const f=fixture({configEdit:c=>{c.policy.followupMinGapDays=[0,3,11];}});f.ready();const sent=await f.simulate();const works=f.engine.planFollowups(f.s.draft.id);
+  f.setTime('2026-10-22T15:00:00Z');f.refresh();
+  const parts=[{type:'possibility',text:'A reviewed handoff could clarify the request.'},{type:'fact',claimId:'schedule',text:f.s.prospect.claims[0].text},{type:'question',text:'Would this handoff help?'}];
+  const first=f.engine.draft({...works[0],id:'delayed-first',subject:'A Small Customer Update Review',sections:parts});f.release(first.id);await f.simulate(first.id);
+  const shifted=f.engine.planFollowups(f.s.draft.id)[1];assert.ok(Date.parse(shifted.dueAt)>=Date.parse('2026-10-25T15:00:00Z'));
+  const second=f.engine.draft({...shifted,id:'second-touch',threadId:sent.threadId,rfcParentId:sent.rfcId,dueAt:f.now().toISOString(),subject:'A Small Customer Update Review',sections:parts});
+  assert.throws(()=>f.release(second.id),/minimum gap/i);f.store.close();
+});
 test('inbound poll cancels a drafted due follow-up immediately before dispatch',async()=>{
   const f=fixture();f.ready();const sent=await f.simulate();const work=f.engine.planFollowups(f.s.draft.id)[0];f.setTime(work.dueAt);f.refresh();
   f.engine.draft({...work,id:work.id,subject:'A Small Customer Update Review',sections:[{type:'possibility',text:'A reviewed handoff could make sharing clearer.'},{type:'fact',claimId:'schedule',text:f.s.prospect.claims[0].text},{type:'question',text:'Would that example be useful?'}]});f.release(work.id);
