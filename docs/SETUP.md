@@ -10,7 +10,7 @@
    npm --version
    ```
 
-2. In the folder where you keep projects, clone the existing repository and enter it. While the repository is private, GitHub must authenticate an account with access.
+2. In the folder where you keep projects, clone the repository and enter it.
 
    ```sh
    git clone https://github.com/hunterbell3122-lab/signal-to-meeting-engine.git

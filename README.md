@@ -1,12 +1,12 @@
 # Signal-to-Meeting Engine
 
-A private, generic business application for evidence-backed outreach, individual human review, follow-ups, replies and interest-led meetings. Business identity, offerings, research sources and operating policy are configurable.
+An open-source, locally operated business application for evidence-backed outreach, individual human review, follow-ups, replies and interest-led meetings. Business identity, offerings, research sources and operating policy are configurable.
 
 **Ready to install in send-disabled mode. Each business's live integration verification remains pending until genuine evidence is supplied.** Environment flags alone cannot activate sending. The installation also requires fresh authenticated sender/integration verification and separate human activation. Neither setup, the console nor the verification commands enable sending.
 
 ## Install and open locally
 
-Requirements: Git, Node.js 24+ (including npm), and an existing computer. No npm dependencies, database server, Docker, paid enrichment or model subscription is required. The repository is currently private; cloning requires access.
+Requirements: Git, Node.js 24+ (including npm), and an existing computer. No npm dependencies, database server, Docker, paid enrichment or model subscription is required.
 
 ```sh
 git clone https://github.com/hunterbell3122-lab/signal-to-meeting-engine.git
@@ -56,4 +56,8 @@ The separate fictional demo always uses mocks and can be viewed with `npm run da
 - [Gmail](docs/integrations/GMAIL.md), [Calendar](docs/integrations/CALENDAR.md), [Notion](docs/integrations/NOTION.md), [research](docs/integrations/RESEARCH.md)
 - [Provenance and reuse status](LICENSE_STATUS.md)
 
-This is a single-business local deployment, not a hosted multi-tenant CRM. It does not promise unrestricted semantic claim verification, web-wide discovery, autonomous prose authoring or commercial results. Source and message authoring remain explicitly reviewed. The private hosted implementation's recurring controlled-test sender renewal and automated daily discovery are not included; the local verifier reads existing owned-inbox artifacts without sending. No original production data/history or third-party source text is included, and no open-source redistribution license has been selected.
+## Supporting the project
+
+The repository is configured for GitHub Sponsors. Sponsorships become available after the owner's GitHub Sponsors profile is approved and payout setup is complete.
+
+This is a single-business local deployment, not a hosted multi-tenant CRM. It does not promise unrestricted semantic claim verification, web-wide discovery, autonomous prose authoring or commercial results. Source and message authoring remain explicitly reviewed. The private hosted implementation's recurring controlled-test sender renewal and automated daily discovery are not included; the local verifier reads existing owned-inbox artifacts without sending. No original production data/history or third-party source text is included. This repository is available under the [MIT License](LICENSE).
